@@ -1,0 +1,20 @@
+export const FORM_FIELDS= [
+        "did",
+        "driver_name",
+        "dob",
+        "gender",
+        "mobile_no",
+        "residential_address",
+        "pob",
+        "experience",
+        "health_issues",
+        "emergency_name",
+        "emergency_number",
+        "reg_no",
+        "license_no",
+        "license_issue_date",
+        "license_expire_date",
+        "license_type",
+        "license_issuing_authority",
+    
+]

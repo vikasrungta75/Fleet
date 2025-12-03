@@ -1,0 +1,134 @@
+{
+	"role": "Admin",
+	"user_id": 3342338,
+	"permissions_category": [
+		{
+			"category": "Vehicles",
+			"permissions": [
+				{
+					"see_all_vehicles": true,
+					"create_vehicle": true,
+					"read_vehicle": true,
+					"update_vehicle": true,
+					"delete_vehicle": true
+				}
+			]
+		},
+		{
+			"category": "Alerts",
+			"permissions": [
+				{
+					"see_all_alerts": true,
+					"create_alert": true,
+					"read_alert": true,
+					"update_alert": true,
+					"delete_alert": true
+				}
+			]
+		},
+		{
+			"category": "Users",
+			"permissions": [
+				{
+					"see_all_users": true,
+					"create_user": true,
+					"read_user": true,
+					"update_user": true,
+					"delete_user": true
+				}
+			]
+		},
+		{
+			"category": "Geofences",
+			"permissions": [
+				{
+					"see_all_geofences": true,
+					"create_geofence": true,
+					"read_geofence": true,
+					"update_geofence": true,
+					"delete_geofence": true
+				}
+			]
+		},
+		{
+			"category": "Roles",
+			"permissions": [
+				{
+					"see_all_roles": true,
+					"create_role": true,
+					"read_role": true,
+					"update_role": true,
+					"delete_role": true
+				}
+			]
+		},
+		{
+			"category": "Groups",
+			"permissions": [
+				{
+					"see_all_groups": true,
+					"create_group": true,
+					"read_group": true,
+					"update_group": true,
+					"delete_group": true
+				}
+			]
+		},
+		{
+			"category": "Permissions",
+			"permissions": [
+				{
+					"edit_permissions_for_each_roles": true,
+					"see_all_permissions": true,
+					"create_permission": true,
+					"read_permission": true,
+					"update_permission": true,
+					"delete_permission": true
+				}
+			]
+		},
+		{
+			"category": "Profile",
+			"permissions": [
+				{
+					"view_role": true,
+					"edit_profile": true,
+					"edit_password": true
+				}
+			]
+		},
+		{
+			"category": "Notifications",
+			"permissions": [
+				{
+					"create_notification": true,
+					"delete_notification": true,
+					"read_notification": true,
+					"update_notification": true
+				}
+			]
+		},
+		{
+			"category": "Maintenance",
+			"permissions": [
+				{
+					"see_all_maintenance": true,
+					"create_maintenance": true,
+					"update_maintenance": true,
+					"delete_maintenance": true
+				}
+			]
+		},
+		{
+			"category": "Driver",
+			"permissions": [
+				{
+					"delete_driver": true,
+					"see_all_driver": true,
+					"update_driver": true,
+					"add_driver": true
+				}
+			]
+		}
+	]
+}
