@@ -6,7 +6,7 @@
         "start": "react-scripts start",
         "build": "react-scripts build",
         "build:staging": "copy .env.stg.example .env.production & npm run build",
-        "build:prod": "copy .env.prod.example .env.production && npm run build",
+        "build:prod": "cp .env.prod.example .env.production && npm run build",
         "build:prod.keeplin": "cp -p .env.prod.example.keeplin .env.production && yarn build",
         "audit": "yarn audit --groups dependencies",
         "outdated": "yarn outdated",
