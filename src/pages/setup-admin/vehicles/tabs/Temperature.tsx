@@ -149,7 +149,8 @@ const Temperature: FC<ITemperaturePops> = ({ goBack }) => {
 			</Card>
 			{isTemperatureMnReportsLoading || isTemperatureReportsLoading ? (
 				<Loader />
-			) : temperatureMnReportsData.length || temperatureReportsData.length ? (
+			// ) : temperatureMnReportsData.length || temperatureReportsData.length ? (
+			) : (temperatureMnReportsData?.length || 0) > 0 || (temperatureReportsData?.length || 0) > 0 ? (
 				<>
 					<div className='d-flex justify-content-between mt-3 mb-3'>
 						<h1 className='fuel-volume-title'>{t('Temperature Graphic Level')}</h1>

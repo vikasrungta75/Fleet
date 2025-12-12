@@ -7,7 +7,6 @@ export const TabsVehicle = [
     { key: 'Vehicle Stopped', value: 'Vehicle Stopped', id: '6' },
     { key: 'Trip Reports', value: 'Trip Reports', id: '7' },
     { key: 'Trip Shift Reports', value: 'Trip Shift Reports', id: '8' },
-    // {key:  'Temperature level statistics',value:'Temperature level statistics',id:'18'},
     { key: 'Geofences Visits', value: 'Geofences Visits', id: '9' },
     { key: 'Engine Hours', value: 'Engine Hours', id: '10' },
     { key: 'Tracker Detach', value: 'Tracker Detach', id: '11' },
