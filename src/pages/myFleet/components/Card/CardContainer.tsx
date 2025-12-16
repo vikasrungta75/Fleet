@@ -7,7 +7,6 @@ import SortCard from './SortCard';
 import Icon from '../../../../components/icon/Icon';
 import { useGetVehicleLocationv1 } from '../../../../services/vehiclesService';
 import filterButton from '../../../../assets/img/filterButton.png';
-import deletes from '../../../../assets/img/delete.png';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import HistoryDetailsCard from './HistoryDetailsCard';
@@ -28,8 +27,6 @@ import {
 } from '../../../../helpers/helpers';
 import { useFormik } from 'formik';
 import SearchComponentCard from '../Card/SearchCard';
-import MapButton from '../map/components/MapButton';
-import { searchImg } from '../map/constants/mapConstants';
 
 interface ICardProps {
 	setIsSettingVisible: () => void;
@@ -94,12 +91,12 @@ const CardMap: FC<ICardProps> = ({ setIsSettingVisible, setIsModalOpen }) => {
 	const [isModalOpen1, setIsModalOpen1] = useState(false);
 
 	const containerComponent: any = {
-		FleetDetailsCard: <FleetDetailsCard creteria={creteria} />,
 		HistoryDetailsCard: (
 			<HistoryDetailsCard
 				creteria={creteria}
 				isModalOpen={isModalOpen1}
 				setIsModalOpen={setIsModalOpen1}
+				fleetDetailsComponent={<FleetDetailsCard creteria={creteria} />}
 			/>
 		),
 	};
@@ -107,7 +104,7 @@ const CardMap: FC<ICardProps> = ({ setIsSettingVisible, setIsModalOpen }) => {
 	const [vinSelectedToShowMap1, setvinSelectedToShowMap1] = useState<any>([]);
 
 	const setSelectedToShowMap1 = (value: any) => {
-		setvinSelectedToShowMap1(value); // Update state in the parent
+		setvinSelectedToShowMap1(value);
 	};
 
 	const payload = {
@@ -172,38 +169,14 @@ const CardMap: FC<ICardProps> = ({ setIsSettingVisible, setIsModalOpen }) => {
 			};
 
 			setCreteria(payload);
-			// setshowFilterPanel(false);
-			// setshowSortPanel(false);
 		},
 	});
-
-	// const handleSubmit1 = () => {
-	// 	formik.handleSubmit();
-	// 	setShowDatePicker1(false);
-	// 	setIsModalOpen1(true);
-
-	// 	dispatch.vehicles.changeShowAllVehicle(true);
-
-	// 	if (isDetailSelected) {
-	// 		dispatch.appStoreNoPersist.addVehicleSelectedToMap(vinSelectedToShowMap1);
-	// 		dispatch.vehicles.changeShowAllVehicle(false);
-	// 	}
-	// };
 
 	const handleSubmit1 = () => {
 		formik.handleSubmit();
 
 		setShowDatePicker1(false);
 		setIsModalOpen1(true);
-		// setisDetailSelected(true);
-
-		//   if (creteria.vins.length === 0) {
-		//     setIsSettingVisible();
-		//   } else {
-		//     setCreteria(payload);
-		//   }
-
-		//   dispatch.appStoreNoPersist.changeSelectedTrajectHistory([]);
 		dispatch.appStoreNoPersist.addVehicleSelectedToMap([]);
 		dispatch.vehicles.changeShowAllVehicle(true);
 
@@ -371,9 +344,7 @@ const CardMap: FC<ICardProps> = ({ setIsSettingVisible, setIsModalOpen }) => {
 								width: '250px',
 							}}
 							className='btn'
-							onClick={handleSubmit1}
-							// disabled={formik.values.vins.length <= 0}
-						>
+							onClick={handleSubmit1}>
 							Apply
 						</button>
 					</div>
@@ -385,6 +356,7 @@ const CardMap: FC<ICardProps> = ({ setIsSettingVisible, setIsModalOpen }) => {
 					creteria={creteria}
 					isModalOpen={isModalOpen1}
 					setIsModalOpen={setIsModalOpen1}
+					fleetDetailsComponent={<FleetDetailsCard creteria={creteria} />}
 				/>
 			)}
 		</div>

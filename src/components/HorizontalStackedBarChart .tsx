@@ -1,150 +1,133 @@
 import React, { FC, useEffect, useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
-import { statusFilters } from '../pages/myFleet/components/map/constants/mapConstants';
 import Spinner from './bootstrap/Spinner';
-import { useGetTripTimeline } from '../services/vehiclesService';
-import {
-	Itimeline,
-	createVehicleTimeLineArray,
-} from '../pages/myFleet/components/Card/FleetDetailsCard';
 import NoData from './NoData';
+import { useGetTripTimeline } from '../services/vehiclesService';
 import { useTranslation } from 'react-i18next';
-import { dateFormatter } from '../helpers/helpers';
 
 interface IHorizontalStackedBarChart {
 	vin?: string;
+	startdate?: string | null;
+	enddate?: string | null;
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-	if (active && payload && payload.length) {
-		return (
-			<div className='custom-tooltip'>
-				<p className='label'>{`${label}h`}</p>
-				<p className='value'>{`Value: ${payload[0].value}`}</p>
-			</div>
-		);
-	}
+const convertDurationToSeconds = (duration: string): number => {
+	let seconds = 0;
 
-	return null;
+	const hr = duration.match(/(\d+)\s*hrs?/);
+	const min = duration.match(/(\d+)\s*mins?/);
+	const sec = duration.match(/(\d+)\s*secs?/);
+
+	if (hr) seconds += parseInt(hr[1]) * 3600;
+	if (min) seconds += parseInt(min[1]) * 60;
+	if (sec) seconds += parseInt(sec[1]);
+
+	return seconds;
 };
 
-const HorizontalStackedBarChart: FC<IHorizontalStackedBarChart> = ({ vin }) => {
-	const [startdate, setStartDate] = useState<string | null>(null);
-	const [enddate, setEndDate] = useState<string | null>(null);
+const STATUS_COLORS: any = {
+	running: '#4CAF50',
+	idle: '#F4C542',
+	stopped: '#FF4C4C',
+	parked: '#4DA6FF',
+};
 
-	useEffect(() => {
-		const getUserTimeZoneOffset = () => {
-			const userTimeZoneOffset = new Date().getTimezoneOffset();
-			return userTimeZoneOffset;
-		};
+const StackedBar = ({ data }: any) => {
+	const totalSec = data.running + data.idle + data.stopped + data.parked;
 
-		const getUserTimeZoneDate = (date: Date, offset: number) => {
-			const userTimeZoneDate = new Date(date.getTime() + offset * 60 * 1000);
-			return userTimeZoneDate;
-		};
+	const getPercent = (value: number) => {
+		if (totalSec === 0) return '0%';
+		let p = (value / totalSec) * 100;
+		if (p < 1 && value > 0) p = 1;
+		return `${p}%`;
+	};
 
-		const calculateStartAndEndDate = () => {
-			const today = new Date();
-			const userTimeZoneOffset = getUserTimeZoneOffset();
-			const yesterday = new Date(today);
-			yesterday.setDate(today.getDate() - 1);
-			const startDate = dateFormatter(
-				getUserTimeZoneDate(yesterday, userTimeZoneOffset),
-				'YYYY-MM-DD HH:mm:ss',
-			);
-			const endDate = dateFormatter(
-				getUserTimeZoneDate(today, userTimeZoneOffset),
-				'YYYY-MM-DD HH:mm:ss',
-			);
-			setStartDate(startDate);
-			setEndDate(endDate);
-		};
+	return (
+		<>
+			<div
+				style={{
+					height: 14,
+					width: '100%',
+					background: '#e6e6e6',
+					borderRadius: 20,
+					display: 'flex',
+					overflow: 'hidden',
+					marginBottom: 10,
+				}}>
+				<div
+					style={{ width: getPercent(data.running), background: STATUS_COLORS.running }}
+				/>
+				<div style={{ width: getPercent(data.idle), background: STATUS_COLORS.idle }} />
+				<div
+					style={{ width: getPercent(data.stopped), background: STATUS_COLORS.stopped }}
+				/>
+				<div style={{ width: getPercent(data.parked), background: STATUS_COLORS.parked }} />
+			</div>
 
-		calculateStartAndEndDate();
-	}, []);
+			<div style={{ fontSize: 14, display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+				<span>
+					<strong>Running:</strong> {(data.running / 3600).toFixed(2)} hrs
+				</span>
+				<span>
+					<strong>Idle:</strong> {(data.idle / 3600).toFixed(2)} hrs
+				</span>
+				<span>
+					<strong>Stopped:</strong> {(data.stopped / 3600).toFixed(2)} hrs
+				</span>
+				{data.parked > 0 && (
+					<span>
+						<strong>Parked:</strong> {(data.parked / 3600).toFixed(2)} hrs
+					</span>
+				)}
+			</div>
+		</>
+	);
+};
 
-	const {
-		data,
-		isLoading,
-		isSuccess: TripTimelineIsSuccess,
-		refetch: TripTimelineRefetch,
-	} = useGetTripTimeline({ vin: vin, startdate, enddate });
+const HorizontalStackedBarChart: FC<IHorizontalStackedBarChart> = ({ vin, startdate, enddate }) => {
+	const { t } = useTranslation(['vehicles']);
 
-	const [vehicleTimeLineArray, setVehicleTimeLineArray] = useState<Itimeline>({
-		timelineObj: {},
-		startTime: 1,
-		endTime: 23,
+	const { data, isLoading } = useGetTripTimeline({ vin, startdate, enddate });
+
+	const [totals, setTotals] = useState({
+		running: 0,
+		idle: 0,
+		stopped: 0,
+		parked: 0,
 	});
 
 	useEffect(() => {
-		if (data) {
-			setVehicleTimeLineArray(createVehicleTimeLineArray(data[0]));
+		if (data && data[0]) {
+			let sum = { running: 0, idle: 0, stopped: 0, parked: 0 };
+
+			data[0].duration.forEach((dur: string, i: number) => {
+				const sec = convertDurationToSeconds(dur);
+				const sts = data[0].status[i];
+
+				if (sts === 'running') sum.running += sec;
+				else if (sts === 'idle') sum.idle += sec;
+				else if (sts === 'stopped') sum.stopped += sec;
+				else sum.parked += sec;
+			});
+
+			setTotals(sum);
 		}
 	}, [data]);
 
-	const { endTime, startTime, timelineObj } = vehicleTimeLineArray;
-
-	const ticks = Array.from({ length: endTime - startTime }, (_, index) => index + 1);
-
-	const { t } = useTranslation(['vehicles']);
-
-	return timelineObj ? (
-		Object.keys(timelineObj).length > 0 ? (
-			<>
-				<ResponsiveContainer height={20} width={'100%'}>
-					<BarChart layout='vertical' data={[timelineObj]} margin={{ bottom: 0 }}>
-						<XAxis
-							type='number'
-							hide
-							domain={[0, endTime - startTime]}
-							ticks={ticks}
-							tickFormatter={(value) => `${value}h`}
-						/>
-
-						<YAxis hide type='category' stroke='#FFFFFF' fontSize='12' />
-						{Object.keys(timelineObj).map((item, index) => {
-							return (
-								<Bar
-									key={index}
-									dataKey={item}
-									fill={
-										statusFilters.filter(
-											(el) =>
-												el.filteredGroup.toLowerCase() ===
-												item.split('_')[0].toLowerCase(),
-										)[0].color
-									}
-									stackId='a'
-									barSize={100}></Bar>
-							);
-						})}
-					</BarChart>
-				</ResponsiveContainer>
-				<div className='w-100 d-flex justify-content-between'>
-					{Array.from({ length: endTime - startTime + 1 }, (_, i) => startTime + i).map(
-						(item: number, index: number) => {
-							return (
-								<div
-									key={index}
-									className='text-end '
-									style={{
-										fontSize: 9,
-										width: `${Math.floor(100 / (endTime - startTime))}%`,
-									}}>
-									{item}h
-								</div>
-							);
-						},
-					)}
-				</div>
-			</>
-		) : (
+	if (isLoading)
+		return (
 			<div className='d-flex justify-content-center h-100 align-items-center'>
 				<Spinner className='spinner-center' color='secondary' size='5rem' />
 			</div>
-		)
-	) : (
-		<NoData text={t('details not found')} withCard={false} />
+		);
+
+	if (!data || !data[0]) return <NoData text={t('details not found')} withCard={false} />;
+
+	return (
+		<>
+			<p style={{ fontWeight: 600, fontSize: 16 }}>Running Status</p>
+			<StackedBar data={totals} />
+		</>
 	);
 };
+
 export default HorizontalStackedBarChart;

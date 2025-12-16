@@ -27,8 +27,9 @@ interface FuelConsumptionProps {
 const FuelConsumption: FC<FuelConsumptionProps> = ({ goBack }) => {
 	const { mobileDesign } = useContext(ThemeContext);
 	const [vinFilter, setVinFilter] = useState<string>('All Vins');
-	const { t, i18n } = useTranslation(['vehicles', 'reports']);
+	const { t } = useTranslation(['vehicles', 'reports']);
 	const { preferedTimeZone } = useSelector((state: RootState) => state.auth);
+
 	const [dateRangeFilter, setDateRangeFilter] = useState<IDateRangeFilter>(
 		getDefaultDateRangeFilter(preferedTimeZone),
 	);
@@ -36,21 +37,29 @@ const FuelConsumption: FC<FuelConsumptionProps> = ({ goBack }) => {
 	const {
 		data: fuelConsumptionData,
 		isLoading: fuelConsumptionLoading,
-		refetch: fuelConsumptionRefetch,
-		remove: fuelConsumptionRemove,
+		isFetching: fuelConsumptionFetching,
 	} = useFuelConsumptionDataReport({ dateRangeFilter, vinFilter });
+
 	const {
 		data: fuelConsumptionRatioData,
 		isLoading: fuelConsumptionRatioLoading,
-		refetch: fuelConsumptionRatioRefetch,
-		remove: fuelConsumptionRatioRemove,
+		isFetching: fuelConsumptionRatioFetching,
 	} = useFuelConsumptionRatioReport({ dateRangeFilter, vinFilter });
 
+	// Combined data for export (only include existing arrays)
+	const combinedExportData = [
+		...(fuelConsumptionRatioData || []),
+		...(fuelConsumptionData || []),
+	];
 
+	const exportVisible =
+		!fuelConsumptionLoading &&
+		!fuelConsumptionRatioLoading &&
+		combinedExportData.length > 0;
 
 	return (
 		<>
-			<Card className='mw-100 reportCards-header' style={{marginBottom:"10px" }}>
+			<Card className='mw-100 reportCards-header' style={{ marginBottom: '10px' }}>
 				<CardBody
 					className={
 						!mobileDesign
@@ -63,6 +72,8 @@ const FuelConsumption: FC<FuelConsumptionProps> = ({ goBack }) => {
 							{t('Fuel Consumption report')}
 						</CardTitle>
 					</div>
+
+					{/* Filters */}
 					<div className='d-flex'>
 						<VinSelect
 							setVinFilter={setVinFilter}
@@ -76,57 +87,75 @@ const FuelConsumption: FC<FuelConsumptionProps> = ({ goBack }) => {
 							withHours={false}
 							position={'end'}
 						/>
+						{exportVisible && (
+							<>
+								<CSVLink
+									style={{
+										textDecoration: 'none',
+										minWidth: '124px',
+										height: '39px',
+										padding: '11px 9px',
+										gap: '10px',
+										borderRadius: '4px',
+										border: '1px solid #000000',
+										boxShadow: '0px 4px 4px 0px #00000040',
+									}}
+									className={`py-0 ${mobileDesign ? 'my-3' : 'me-3'}`}
+									filename={'Fuel_Consumption_Report'}
+									data={combinedExportData}>
+									<div className='report_buttons pt-2'>
+										<Icon icon='DownloadIcon' className='me-2' size={'lg'} />
+										<span className='export-buttons'>{t('Export CSV')}</span>
+									</div>
+								</CSVLink>
 
-						{!fuelConsumptionLoading &&
-							!fuelConsumptionRatioLoading &&
-							fuelConsumptionData &&
-							fuelConsumptionRatioData &&
-							fuelConsumptionData?.length !== 0 &&
-							fuelConsumptionRatioData?.length !== 0 && (
-								<>
-									<CSVLink
-										style={{ textDecoration: 'none', minWidth: '124px', height: '39px', padding: '11px 9px', gap: '10px', borderRadius: '4px', border: '1px solid #000000', boxShadow: '0px 4px 4px 0px #00000040', }}
-										className={`py-0 ${mobileDesign ? 'my-3' : 'me-3'
-											}`}
-										filename={'Geofences Visits'}
-										data={[
-											...fuelConsumptionRatioData,
-											...fuelConsumptionData,
-										]}>
-										<div className='report_buttons pt-2'>
-											<Icon icon='DownloadIcon' className='me-2' size={'lg'} />
-											<span className='export-buttons'>{t('Export CSV')}</span>
-										</div>
-									</CSVLink>
-									<XLSXLink
-										style={{ textDecoration: 'none', minWidth: '124px', height: '39px', padding: '11px 9px', gap: '10px', borderRadius: '4px', border: '1px solid #000000', boxShadow: '0px 4px 4px 0px #00000040', backgroundColor: "#FFFFFF" }}
-										className={`py-0 ${mobileDesign ? 'my-3' : 'me-3'
-											}`}
-										filename={'Geofences Visits'}
-										data={[
-											...fuelConsumptionRatioData,
-											...fuelConsumptionData,
-										]}>
-										<div className='report_buttons pt-2'>
-											<Icon icon='DownloadIcon' className='me-2' size={'lg'} />
-											<span className='export-buttons'>{t('Export XLSX')}</span>
-										</div>
-									</XLSXLink>
-								</>
-							)}
+								<XLSXLink
+									style={{
+										textDecoration: 'none',
+										minWidth: '124px',
+										height: '39px',
+										padding: '11px 9px',
+										gap: '10px',
+										borderRadius: '4px',
+										border: '1px solid #000000',
+										boxShadow: '0px 4px 4px 0px #00000040',
+										backgroundColor: '#FFFFFF',
+									}}
+									className={`py-0 ${mobileDesign ? 'my-3' : 'me-3'}`}
+									filename={'Fuel_Consumption_Report'}
+									data={combinedExportData}>
+									<div className='report_buttons pt-2'>
+										<Icon icon='DownloadIcon' className='me-2' size={'lg'} />
+										<span className='export-buttons'>{t('Export XLSX')}</span>
+									</div>
+								</XLSXLink>
+							</>
+						)}
 					</div>
 				</CardBody>
 			</Card>
-			{fuelConsumptionRatioLoading && fuelConsumptionLoading ? (
+
+			{/* Loading */}
+			{fuelConsumptionFetching || fuelConsumptionRatioFetching ? (
 				<Loader />
 			) : (
 				<>
-					{fuelConsumptionData && fuelConsumptionRatioData && (
-						<>
-							<DatatableFuelConsumptionData data={fuelConsumptionData} />
-							<DatatableFuelConsumptionRatio data={fuelConsumptionRatioData} />
-						</>
+					{fuelConsumptionData?.length > 0 && (
+						<DatatableFuelConsumptionData data={fuelConsumptionData} />
 					)}
+
+					{fuelConsumptionRatioData?.length > 0 && (
+						<DatatableFuelConsumptionRatio data={fuelConsumptionRatioData} />
+					)}
+
+					{!fuelConsumptionFetching &&
+						!fuelConsumptionRatioFetching &&
+						(!fuelConsumptionData?.length &&
+							!fuelConsumptionRatioData?.length) && (
+							<p className='text-center mt-4'>
+								{t('No data available')}
+							</p>
+						)}
 				</>
 			)}
 		</>
