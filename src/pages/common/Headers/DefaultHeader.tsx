@@ -1,4 +1,3 @@
-
 import classNames from 'classnames';
 import React, { useContext, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -14,25 +13,25 @@ import ThemeContext from '../../../contexts/themeContext';
 import DrawerNotifications from '../../notifications/components/DrawerNotifications';
 import { useLocation } from 'react-router-dom';
 import GoBack from '../../../components/GoBack';
-
+ 
 const DefaultHeader = () => {
   const location = useLocation();
   const { user } = useSelector((state: RootState) => state.auth.user);
   const { notificationsCount } = useSelector((state: RootState) => state.notifications);
-
+ 
   const { t } = useTranslation(['setup']);
   const { darkModeStatus } = useDarkMode();
   const { mobileDesign } = useContext(ThemeContext);
-
+ 
   const [notificationsModalOpen, setNotificationsModalOpen] = useState(false);
-
+ 
   const styledBtn: IButtonProps = {
     color: darkModeStatus ? 'dark' : 'light',
     hoverShadow: 'default',
     isLight: !darkModeStatus,
     size: 'lg',
   };
-
+ 
   // Define the possible route names
   const tabNames: { [key: string]: string } = {
     '/Overview': 'Overview',
@@ -43,23 +42,28 @@ const DefaultHeader = () => {
     '/add_task': 'Workflow',
     '/setup/vehicles': 'Setup Admin',
     '/setup/alerts': 'Setup Admin',
+     '/setup/users-list': 'Setup Admin',
+      '/setup/roles': 'Setup Admin',
+       '/setup/groups-list': 'Setup Admin',
+        '/setup/geofences': 'Setup Admin',
     '/setup/drivers-list':'Setup Admin',
     '/setup/alerts/edit-alert':'Setup Admin',
     '/workflow/taskoverview' :'Workflow',
+     '/workflow/taskmonitoring' :'Workflow',
      '/fleetcopilot' :'Fleetcopilot'
-    
+   
   };
-
+ 
   // Determine the current tab name or fallback
   // const currentTab = tabNames[location.pathname] || 'Overview';
   const currentTab = t(tabNames[location.pathname] || 'Overview');
-
-
+ 
+ 
   // Conditionally render the header based on the current path
   if (location.pathname === '/my-fleet') {
     return null; // Don't render anything for '/my-fleet'
   }
-
+ 
   // Determine heading based on the current path
   const renderHeading = () => {
     if (location.pathname === '/settings/scheduled-reports') {
@@ -123,7 +127,7 @@ const DefaultHeader = () => {
     }
     return currentTab;
   };
-
+ 
   return (
     <Header>
       {mobileDesign ? (
@@ -174,7 +178,7 @@ const DefaultHeader = () => {
           </HeaderRight>
         </>
       )}
-
+ 
       {notificationsModalOpen && (
         <DrawerNotifications
           setIsModalOpen={setNotificationsModalOpen}
@@ -184,5 +188,5 @@ const DefaultHeader = () => {
     </Header>
   );
 };
-
+ 
 export default DefaultHeader;
