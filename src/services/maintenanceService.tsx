@@ -120,11 +120,11 @@ import { store } from '../store/store';
 import { dataIngestion, getData } from './commonService';
 
 export const useGetMaintenanceTasks = (filters: {
-	vin_filter: string;
-	status_filter: string;
-	sort: number;
-	sortField: number;
-}) => {
+    vin_filter: string;
+    status_filter: string;
+    sort: number;
+    sortField: number;
+}, p0: { refetchOnMountOrArgChange: boolean; }) => {
 	const {
 		user: {
 			user: { id },
