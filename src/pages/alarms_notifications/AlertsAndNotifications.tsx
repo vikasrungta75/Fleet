@@ -674,16 +674,16 @@ const AlertsAndNotifications: FC = () => {
 			{selectedAlert && (
 				<AlertDetailModal
 					alert={{
-						...selectedAlert,
+						...selectedAlert as any,
 						type:       selectedAlert.alertName || selectedAlert.alarmType || selectedAlert.eventType || 'Unknown',
 						severity:   getSeverity(selectedAlert),
 						device:     selectedAlert.deviceName || selectedAlert.imei,
 						imei:       selectedAlert.imei,
 						time:       new Date(selectedAlert.alertTime).toLocaleString(),
 						timeAgo:    timeAgo(selectedAlert.alertTime),
-						location:   selectedAlert.location || '',
+						location:   (selectedAlert as any).location || '',
 						hasDashcam: alertHasMedia(selectedAlert),
-					}}
+					} as any}
 					onClose={() => setSelectedAlert(null)}
 					relatedMedia={getRelatedVideo(selectedAlert)}
 					relatedImage={getRelatedImage(selectedAlert)}
