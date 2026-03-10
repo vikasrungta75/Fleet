@@ -627,34 +627,22 @@ const LiveStreaming: FC = () => {
 
       // Step 3: Start streams for all channels
       setStreamProgress(`Starting ${channelCount} camera${channelCount > 1 ? 's' : ''}…`);
-      const channelPromises = Array.from({ length: channelCount }, async (_, i) => {
-        const ch = i + 1;
-        try {
-          const session = await startLiveVideo(device.imei, ch, 'audio_video', 'main_stream');
-
-          // ─── KEY FIX ───────────────────────────────────────────────────────
-          // Use resolveStreamUrls() which prefers streamingSslUrls (HTTPS, public)
-          // over streamingUrls (HTTP internal IPs that are unreachable from browser)
-          const { flvUrl, hlsUrl, rtmpUrl } = resolveStreamUrls(session);
-          // ──────────────────────────────────────────────────────────────────
-
-          console.log(`[LiveStream] CH${ch} → FLV: ${flvUrl} | HLS: ${hlsUrl}`);
-
-          return {
-            ch,
-            label: CHANNEL_LABELS[i] || `Camera ${ch}`,
-            flvUrl,
-            hlsUrl,
-            rtmpUrl,
-            active: true,
-          };
-        } catch (err) {
-          console.error(`[LiveStream] CH${ch} startLiveVideo error:`, err);
-          return { ch, label: CHANNEL_LABELS[i] || `Camera ${ch}`, flvUrl: '', hlsUrl: '', rtmpUrl: '', active: true };
-        }
-      });
-
-      const channels = await Promise.all(channelPromises);
+            // Start channels sequentially to avoid device rejecting concurrent requests
+                const channels: StreamChannel[] = [];
+                for (let i = 0; i < channelCount; i++) {
+                const ch = i + 1;
+                try {
+                const session = await startLiveVideo(device.imei, ch, 'audio_video', 'main_stream');
+                const { flvUrl, hlsUrl, rtmpUrl } = resolveStreamUrls(session);
+                console.log(`[LiveStream] CH${ch} → FLV: ${flvUrl} | HLS: ${hlsUrl}`);
+                channels.push({ ch, label: CHANNEL_LABELS[i] || `Camera ${ch}`, flvUrl, hlsUrl, rtmpUrl, active: true });
+                // Small gap so device registers the first stream before starting the next
+                if (i < channelCount - 1) await new Promise(r => setTimeout(r, 1500));
+                } catch (err) {
+                console.error(`[LiveStream] CH${ch} startLiveVideo error:`, err);
+                channels.push({ ch, label: CHANNEL_LABELS[i] || `Camera ${ch}`, flvUrl: '', hlsUrl: '', rtmpUrl: '', active: true });
+                  }
+                }
 
       const hasAnyActive = channels.some(c => c.active);
       if (!hasAnyActive && channels.length > 0) {

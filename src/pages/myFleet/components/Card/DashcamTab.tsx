@@ -68,30 +68,21 @@ const DashcamTab: FC<DashcamTabProps> = ({ preselectedImei }) => {
       channelCount = 2;
     }
 
-    // Rewrite internal HTTP URLs to public HTTPS endpoint
-    const results = await Promise.all(
-      Array.from({ length: channelCount }, async (_, i) => {
-        const ch = i + 1;
-        try {
-          const session = await startLiveVideo(imei, ch, 'audio_video', 'main_stream');
-          // resolveStreamUrls prefers streamingSslUrls (public HTTPS) over
-          // streamingUrls (internal HTTP IPs unreachable from the browser).
-          const { flvUrl, hlsUrl, rtmpUrl } = resolveStreamUrls(session);
-          console.log(`[DashcamTab] CH${ch} → FLV: ${flvUrl} | HLS: ${hlsUrl}`);
-          return {
-            ch,
-            label: CHANNEL_LABELS[i] || `Camera ${ch}`,
-            flvUrl, hlsUrl, rtmpUrl,
-            active: true,
-          };
-        } catch (err) {
-          console.error(`[DashcamTab] CH${ch} startLiveVideo error:`, err);
-          return { ch, label: CHANNEL_LABELS[i] || `Camera ${ch}`, flvUrl: '', hlsUrl: '', rtmpUrl: '', active: true };
-        }
-      }),
-    );
+    const results: StreamChannel[] = [];
+    for (let i = 0; i < channelCount; i++) {
+      const ch = i + 1;
+      try {
+        const session = await startLiveVideo(imei, ch, 'audio_video', 'main_stream');
+        const { flvUrl, hlsUrl, rtmpUrl } = resolveStreamUrls(session);
+        console.log(`[DashcamTab] CH${ch} → FLV: ${flvUrl} | HLS: ${hlsUrl}`);
+        results.push({ ch, label: CHANNEL_LABELS[i] || `Camera ${ch}`, flvUrl, hlsUrl, rtmpUrl, active: true });
+        if (i < channelCount - 1) await new Promise(r => setTimeout(r, 1500));
+      } catch (err) {
+        console.error(`[DashcamTab] CH${ch} startLiveVideo error:`, err);
+        results.push({ ch, label: CHANNEL_LABELS[i] || `Camera ${ch}`, flvUrl: '', hlsUrl: '', rtmpUrl: '', active: true });
+      }
+    }
     return results;
-  };
 
   // ── Load device list ─────────────────────────────────────────────────────────
   const loadDevices = useCallback(async () => {
