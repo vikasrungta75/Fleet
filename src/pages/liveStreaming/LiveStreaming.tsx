@@ -24,6 +24,8 @@ const T = {
   textPrimary: '#1a1a2e', textSecondary: '#555', textMuted: '#888',
   pink: '#f00d69', green: '#2da44e', red: '#d0021b', blue: '#1565c0', blueBg: '#e3f2fd',
   purple: '#6c5dd3',
+  purpleLight: '#f0eeff',
+  purpleBorder: '#d4ccff',
 };
 
 const MAX_RETRIES = 5;
@@ -54,17 +56,39 @@ interface CapturePanelProps {
   captureProgress: string;
 }
 
+// SVG icons for capture modes — Ravity purple theme
+const IcCamera: FC<{ active?: boolean }> = ({ active }) => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={active ? T.purple : '#b0b0c8'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+    <circle cx="12" cy="13" r="4"/>
+  </svg>
+);
+const IcMultiCamera: FC<{ active?: boolean }> = ({ active }) => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={active ? T.purple : '#b0b0c8'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+    <circle cx="12" cy="13" r="4"/>
+    <path d="M16 3h2v2" strokeDasharray="2 1"/>
+    <path d="M19 3h2" strokeDasharray="2 1"/>
+  </svg>
+);
+const IcVideo: FC<{ active?: boolean }> = ({ active }) => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={active ? T.purple : '#b0b0c8'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="23,7 16,12 23,17 23,7" fill={active ? T.purple : 'none'}/>
+    <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+  </svg>
+);
+
 const Stepper: FC<{ label: string; value: number; min: number; max: number; onChange: (v: number) => void }> = ({ label, value, min, max, onChange }) => (
   <div style={{ flex: 1 }}>
-    <div style={{ fontSize: 10, color: T.textMuted, marginBottom: 6, fontWeight: 600 }}>{label}</div>
-    <div style={{ display: 'flex', alignItems: 'center', border: `1px solid ${T.border}`, borderRadius: 6, overflow: 'hidden', background: '#fff' }}>
+    <div style={{ fontSize: 11, color: T.textMuted, marginBottom: 8, fontWeight: 600 }}>{label}</div>
+    <div style={{ display: 'flex', alignItems: 'center', border: `1.5px solid ${T.purpleBorder}`, borderRadius: 8, overflow: 'hidden', background: '#fff' }}>
       <button onClick={() => onChange(Math.max(min, value - 1))}
-        style={{ width: 30, height: 34, background: '#f5f5f5', border: 'none', cursor: value <= min ? 'not-allowed' : 'pointer', fontSize: 16, color: value <= min ? '#ccc' : T.textPrimary, flexShrink: 0 }}>−</button>
-      <span style={{ flex: 1, textAlign: 'center', fontSize: 14, fontWeight: 700, color: T.textPrimary }}>{value}</span>
+        style={{ width: 36, height: 36, background: value <= min ? '#f8f9fa' : T.purpleLight, border: 'none', cursor: value <= min ? 'not-allowed' : 'pointer', fontSize: 18, color: value <= min ? '#ccc' : T.purple, flexShrink: 0, fontWeight: 700 }}>−</button>
+      <span style={{ flex: 1, textAlign: 'center', fontSize: 15, fontWeight: 700, color: T.textPrimary }}>{value}</span>
       <button onClick={() => onChange(Math.min(max, value + 1))}
-        style={{ width: 30, height: 34, background: '#f5f5f5', border: 'none', cursor: value >= max ? 'not-allowed' : 'pointer', fontSize: 16, color: value >= max ? '#ccc' : T.textPrimary, flexShrink: 0 }}>+</button>
+        style={{ width: 36, height: 36, background: value >= max ? '#f8f9fa' : T.purpleLight, border: 'none', cursor: value >= max ? 'not-allowed' : 'pointer', fontSize: 18, color: value >= max ? '#ccc' : T.purple, flexShrink: 0, fontWeight: 700 }}>+</button>
     </div>
-    <div style={{ fontSize: 9, color: T.textMuted, marginTop: 3, textAlign: 'center' }}>max {max}</div>
+    <div style={{ fontSize: 10, color: T.textMuted, marginTop: 4, textAlign: 'center' }}>max {max}</div>
   </div>
 );
 
@@ -81,70 +105,74 @@ const CapturePanel: FC<CapturePanelProps> = ({ onSingleCapture, onMultiCapture, 
     else { onVideoCapture(videoDuration); setOpen(false); }
   };
 
-  const modes: { key: CaptureMode; icon: string; label: string; sub: string }[] = [
-    { key: 'single', icon: '📷', label: 'Single Photo',  sub: 'Capture one image' },
-    { key: 'multi',  icon: '📷', label: 'Multi Photos',  sub: 'Timed captures' },
-    { key: 'video',  icon: '🎬', label: 'Video Record',  sub: 'Continuous recording' },
+  const modes: { key: CaptureMode; icon: (a: boolean) => JSX.Element; label: string; sub: string }[] = [
+    { key: 'single', icon: (a) => <IcCamera active={a} />,      label: 'Single Photo',   sub: 'Capture one image' },
+    { key: 'multi',  icon: (a) => <IcMultiCamera active={a} />, label: 'Multi Photos',   sub: 'Timed captures' },
+    { key: 'video',  icon: (a) => <IcVideo active={a} />,       label: 'Video Record',   sub: 'Continuous recording' },
   ];
 
   const actionLabel = mode === 'single'
-    ? '📷 Capture Now'
+    ? 'Capture Now'
     : mode === 'multi'
-    ? `📷 Start (${photoCount} photos, ${intervalSec}s gap)`
-    : `🎬 Record ${videoDuration}s`;
+    ? `Start (${photoCount} photos, ${intervalSec}s gap)`
+    : `Record ${videoDuration}s`;
 
   return (
     <div style={{ position: 'relative' }}>
+      {/* Trigger button — purple Ravity style */}
       <button onClick={() => setOpen(o => !o)} disabled={isCapturing}
-        style={{ background: isCapturing ? '#aaa' : T.pink, border: 'none', color: '#fff', borderRadius: 5, padding: '6px 16px', cursor: isCapturing ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 700, boxShadow: '0 2px 10px rgba(240,13,105,0.3)', whiteSpace: 'nowrap' }}>
-        {isCapturing ? captureProgress : '📸 Capture ▾'}
+        style={{ background: isCapturing ? '#aaa' : T.purple, border: 'none', color: '#fff', borderRadius: 7, padding: '7px 16px', cursor: isCapturing ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 700, boxShadow: '0 2px 10px rgba(108,93,211,0.35)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+        {isCapturing ? captureProgress : 'Capture ▾'}
       </button>
 
       {open && !isCapturing && (
         <>
           <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setOpen(false)} />
-          <div style={{ position: 'absolute', bottom: 46, right: 0, background: '#fff', border: `1px solid ${T.border}`, borderRadius: 12, padding: 16, width: 360, boxShadow: '0 8px 32px rgba(0,0,0,0.18)', zIndex: 100 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: T.textPrimary, marginBottom: 12 }}>Capture Mode</div>
+          <div style={{ position: 'absolute', bottom: 46, right: 0, background: '#fff', border: `1.5px solid ${T.purpleBorder}`, borderRadius: 16, padding: 20, width: 370, boxShadow: '0 8px 32px rgba(108,93,211,0.2)', zIndex: 100 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: T.textPrimary, marginBottom: 14 }}>Capture Mode</div>
 
-            {/* Mode selector */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 14 }}>
+            {/* Mode selector cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
               {modes.map(m => (
                 <div key={m.key} onClick={() => setMode(m.key)}
-                  style={{ border: `2px solid ${mode === m.key ? T.purple : T.border}`, background: mode === m.key ? '#f0eeff' : '#fafafa', borderRadius: 10, padding: '10px 6px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.15s' }}>
-                  <div style={{ fontSize: 22, marginBottom: 4 }}>{m.icon}</div>
+                  style={{ border: `2px solid ${mode === m.key ? T.purple : T.border}`, background: mode === m.key ? T.purpleLight : '#fafbff', borderRadius: 12, padding: '12px 8px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.15s', boxShadow: mode === m.key ? `0 2px 8px rgba(108,93,211,0.18)` : 'none' }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6 }}>{m.icon(mode === m.key)}</div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: mode === m.key ? T.purple : T.textPrimary }}>{m.label}</div>
                   <div style={{ fontSize: 9, color: mode === m.key ? T.purple : T.textMuted, marginTop: 2 }}>{m.sub}</div>
                 </div>
               ))}
             </div>
 
-            {/* Multi photo settings */}
+            {/* Settings area */}
             {mode === 'multi' && (
-              <div style={{ display: 'flex', gap: 12, marginBottom: 14, background: '#f8f9fa', borderRadius: 8, padding: '12px' }}>
-                <Stepper label="Snapshot Interval (s)" value={intervalSec} min={1} max={10} onChange={setIntervalSec} />
+              <div style={{ display: 'flex', gap: 12, marginBottom: 16, background: T.purpleLight, borderRadius: 10, padding: '14px 12px', border: `1px solid ${T.purpleBorder}` }}>
+                <Stepper label="Interval (seconds)" value={intervalSec} min={1} max={10} onChange={setIntervalSec} />
                 <Stepper label="Photo Count" value={photoCount} min={2} max={10} onChange={setPhotoCount} />
               </div>
             )}
-
-            {/* Video settings */}
             {mode === 'video' && (
-              <div style={{ marginBottom: 14, background: '#f8f9fa', borderRadius: 8, padding: '12px' }}>
+              <div style={{ marginBottom: 16, background: T.purpleLight, borderRadius: 10, padding: '14px 12px', border: `1px solid ${T.purpleBorder}` }}>
                 <Stepper label="Recording Duration (seconds)" value={videoDuration} min={5} max={30} onChange={setVideoDuration} />
               </div>
             )}
-
-            {/* Single photo info */}
             {mode === 'single' && (
-              <div style={{ marginBottom: 14, background: '#f8f9fa', borderRadius: 8, padding: '10px 12px', fontSize: 11, color: T.textMuted, textAlign: 'center' }}>
-                Captures current frame as a PNG image
+              <div style={{ marginBottom: 16, background: '#f8f9ff', borderRadius: 10, padding: '10px 14px', border: `1px solid ${T.border}`, fontSize: 12, color: T.textMuted, textAlign: 'center' }}>
+                Captures the current video frame as a PNG
               </div>
             )}
 
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => setOpen(false)}
-                style={{ flex: 1, background: '#f5f5f5', border: `1px solid ${T.border}`, color: T.textSecondary, borderRadius: 6, padding: '8px 0', cursor: 'pointer', fontSize: 12 }}>Cancel</button>
+                style={{ flex: 1, background: '#f5f5f5', border: `1px solid ${T.border}`, color: T.textSecondary, borderRadius: 8, padding: '9px 0', cursor: 'pointer', fontSize: 12, fontWeight: 500 }}>Cancel</button>
               <button onClick={handleCapture}
-                style={{ flex: 2, background: T.purple, border: 'none', color: '#fff', borderRadius: 6, padding: '8px 0', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>
+                style={{ flex: 2, background: T.purple, border: 'none', color: '#fff', borderRadius: 8, padding: '9px 0', cursor: 'pointer', fontSize: 12, fontWeight: 700, boxShadow: '0 2px 8px rgba(108,93,211,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                {mode === 'video'
+                  ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><polygon points="23,7 16,12 23,17 23,7" fill="#fff"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                  : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>}
                 {actionLabel}
               </button>
             </div>

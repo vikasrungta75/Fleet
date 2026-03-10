@@ -327,17 +327,83 @@ const Pagination: FC<{ page: number; totalPages: number; total: number; onPage: 
 );
 
 // ── TAB 1: ALERTS ─────────────────────────────────────────────────────────────
+// Alert type colour mapping (matches Image 1 design)
+const ALERT_TYPE_COLOR: Record<string, string> = {
+	'Device Normal':      '#2da44e',
+	'About To Sleep':     '#f59e0b',
+	'Ignition Off':       '#6c5dd3',
+	'Ignition On':        '#3b82f6',
+	'Emergency Sos':      '#d32f2f',
+	'Emergency SOS':      '#d32f2f',
+	'Hard Braking':       '#e65100',
+	'Harsh Brake':        '#e65100',
+	'Harsh Acceleration': '#f59e0b',
+	'Speeding':           '#d32f2f',
+	'Overspeed':          '#d32f2f',
+	'Fatigue Detection':  '#7b1fa2',
+	'Phone Use':          '#c62828',
+	'Lane Departure':     '#1565c0',
+	'Collision Warning':  '#b71c1c',
+	'Connection Lost':    '#c62828',
+	'Tailgating':         '#f39c12',
+	'Seatbelt':           '#1abc9c',
+};
+const getAlertTypeColor = (name: string) =>
+	ALERT_TYPE_COLOR[name] || ALERT_TYPE_COLOR[name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()] || '#6c5dd3';
+
+// Inline media attachment icons (like Image 1 — outline when no media, filled/coloured when available)
+const AttachmentCell: FC<{ alert: IotAlert }> = ({ alert }) => {
+	const [viewVideo, setViewVideo] = useState<IotAttachment | null>(null);
+	const [viewImage, setViewImage] = useState<IotAttachment | null>(null);
+	const attachments = (alert as any).attachment || [];
+	const videos = attachments.filter((a: IotAttachment) => a.mediaType === 1);
+	const images = attachments.filter((a: IotAttachment) => a.mediaType === 0);
+	const hasVideo = videos.length > 0;
+	const hasImage = images.length > 0;
+	const name = alert.alertName || alert.alarmType || alert.eventType;
+	return (
+		<div style={{ display:'flex', gap:8, alignItems:'center' }}>
+			{/* Image attachment icon */}
+			<button title={hasImage ? 'View image' : 'No image'} onClick={() => hasImage && setViewImage(images[0])}
+				style={{ background:'none', border:'none', cursor: hasImage ? 'pointer' : 'default', padding:2, opacity: hasImage ? 1 : 0.28, display:'flex', alignItems:'center' }}>
+				<svg width="20" height="20" viewBox="0 0 24 24" fill={hasImage ? T.pink : 'none'} stroke={hasImage ? T.pink : T.textMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+					<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/>
+				</svg>
+			</button>
+			{/* Video attachment icon */}
+			<button title={hasVideo ? 'View video' : 'No video'} onClick={() => hasVideo && setViewVideo(videos[0])}
+				style={{ background:'none', border:'none', cursor: hasVideo ? 'pointer' : 'default', padding:2, opacity: hasVideo ? 1 : 0.28, display:'flex', alignItems:'center' }}>
+				<svg width="20" height="20" viewBox="0 0 24 24" fill={hasVideo ? T.purple : 'none'} stroke={hasVideo ? T.purple : T.textMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+					<polygon points="5,3 19,12 5,21" fill={hasVideo ? T.purple : 'none'}/>
+					<circle cx="12" cy="12" r="10" fill="none"/>
+				</svg>
+			</button>
+			{viewVideo && <VideoViewerModal url={resolveMediaUrl(viewVideo.storagePath)} title={name} ch={viewVideo.channel} onClose={() => setViewVideo(null)} />}
+			{viewImage && <ImageViewerModal url={resolveMediaUrl(viewImage.storagePath)} title={name} ch={viewImage.channel} onClose={() => setViewImage(null)} />}
+		</div>
+	);
+};
+
+// Dismiss icon (bell with slash)
+const IconDismiss: FC<{ color?: string }> = ({ color = '#f59e0b' }) => (
+	<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+		<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+		<line x1="1" y1="1" x2="23" y2="23"/>
+	</svg>
+);
+
 const AlertsTab: FC<{ onSelectAlert: (a: IotAlert) => void }> = ({ onSelectAlert }) => {
-	const [alerts, setAlerts]       = useState<IotAlert[]>([]);
-	const [loading, setLoading]     = useState(true);
-	const [apiError, setApiError]   = useState<string | null>(null);
-	const [page, setPage]           = useState(1);
+	const [alerts, setAlerts]         = useState<IotAlert[]>([]);
+	const [dismissed, setDismissed]   = useState<Set<number>>(new Set());
+	const [loading, setLoading]       = useState(true);
+	const [apiError, setApiError]     = useState<string | null>(null);
+	const [page, setPage]             = useState(1);
 	const [totalPages, setTotalPages] = useState(1);
-	const [total, setTotal]         = useState(0);
-	const [search, setSearch]       = useState('');
+	const [total, setTotal]           = useState(0);
+	const [search, setSearch]         = useState('');
 	const [typeFilter, setTypeFilter] = useState('');
-	const [sortField, setSortField] = useState<SortField>(null);
-	const [sortDir, setSortDir]     = useState<SortDir>('asc');
+	const [sortField, setSortField]   = useState<SortField>(null);
+	const [sortDir, setSortDir]       = useState<SortDir>('desc');
 	const PAGE_SIZE = 20;
 
 	const load = useCallback(async (p: number) => {
@@ -358,7 +424,8 @@ const AlertsTab: FC<{ onSelectAlert: (a: IotAlert) => void }> = ({ onSelectAlert
 	const dynamicTypes = Array.from(new Set(alerts.map(a => a.alertName || a.alarmType || a.eventType || '').filter(Boolean)));
 	const alertTypes = Array.from(new Set([...KNOWN_ALERT_TYPES, ...dynamicTypes])).sort();
 
-	let displayed = typeFilter ? alerts.filter(a => (a.alertName || a.alarmType || a.eventType || '') === typeFilter) : alerts;
+	let displayed = alerts.filter(a => !dismissed.has(a.id));
+	if (typeFilter) displayed = displayed.filter(a => (a.alertName || a.alarmType || a.eventType || '') === typeFilter);
 
 	if (sortField) {
 		const SORD: Record<string, number> = { Critical:0, High:1, Warning:2, Info:3, Normal:4 };
@@ -385,14 +452,17 @@ const AlertsTab: FC<{ onSelectAlert: (a: IotAlert) => void }> = ({ onSelectAlert
 		</span>
 	);
 
+	// Columns matching Image 1: ID | Alert Time | Alert Type | Trigger Type | Device ID | Device Name | Location | Attachment | Actions
 	const COLS = [
-		{ label:'MEDIA',    field:null       as SortField, width:'80px' },
-		{ label:'SEVERITY', field:'SEVERITY' as SortField, width:'120px' },
-		{ label:'TYPE',     field:'TYPE'     as SortField, width:'1fr' },
-		{ label:'DEVICE',   field:'DEVICE'   as SortField, width:'1fr' },
-		{ label:'IMEI',     field:null       as SortField, width:'1fr' },
-		{ label:'TIME',     field:'TIME'     as SortField, width:'1fr' },
-		{ label:'VIEW',     field:null       as SortField, width:'70px' },
+		{ label:'ID',           field:null       as SortField, width:'60px' },
+		{ label:'Alert Time',   field:'TIME'     as SortField, width:'160px' },
+		{ label:'Alert Type',   field:'TYPE'     as SortField, width:'1fr' },
+		{ label:'Trigger Type', field:null       as SortField, width:'110px' },
+		{ label:'Device ID',    field:null       as SortField, width:'1fr' },
+		{ label:'Device Name',  field:'DEVICE'   as SortField, width:'120px' },
+		{ label:'Location',     field:null       as SortField, width:'1fr' },
+		{ label:'Attachment',   field:null       as SortField, width:'100px' },
+		{ label:'Actions',      field:null       as SortField, width:'90px' },
 	];
 	const grid = COLS.map(c => c.width).join(' ');
 
@@ -402,11 +472,11 @@ const AlertsTab: FC<{ onSelectAlert: (a: IotAlert) => void }> = ({ onSelectAlert
 				options={alertTypes} selected={typeFilter} onSelect={v => { setTypeFilter(v); setPage(1); }}
 				placeholder='All Alert Types' count={displayed.length} total={total} label='Alerts' />
 
-			<div style={{ background:T.card, borderRadius:12, border:`1px solid ${T.border}`, overflow:'hidden', boxShadow:'0 2px 8px rgba(108,93,211,0.07)' }}>
+			<div style={{ background:T.card, borderRadius:12, border:`1px solid ${T.border}`, overflow:'auto', boxShadow:'0 2px 8px rgba(108,93,211,0.07)' }}>
 				{/* Header */}
-				<div style={{ display:'grid', gridTemplateColumns:grid, borderBottom:`1px solid ${T.border}`, padding:'10px 20px', background:T.headerBg }}>
+				<div style={{ display:'grid', gridTemplateColumns:grid, borderBottom:`1px solid ${T.border}`, padding:'11px 20px', background:T.headerBg, minWidth:900 }}>
 					{COLS.map(({ label, field }) => (
-						<div key={label} style={{ color:T.textMuted, fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:0.8, display:'flex', alignItems:'center' }}>
+						<div key={label} style={{ color:T.textMuted, fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:0.7, display:'flex', alignItems:'center', whiteSpace:'nowrap' }}>
 							{label}{field && <SortBtn field={field} />}
 						</div>
 					))}
@@ -415,36 +485,51 @@ const AlertsTab: FC<{ onSelectAlert: (a: IotAlert) => void }> = ({ onSelectAlert
 				{loading ? <Spinner /> : displayed.length === 0
 					? <EmptyState icon={<IconDashcam size={32} color={T.textMuted} />} msg='No alerts found' />
 					: displayed.map((alert, i) => {
-						const sev = getSeverity(alert);
-						const s = SEV[sev];
 						const name = alert.alertName || alert.alarmType || alert.eventType || 'Unknown';
+						const typeColor = getAlertTypeColor(name);
+						const loc = (alert as any).location || '';
+						// Format time as YYYY-MM-DD HH:mm:ss
+						const dt = new Date(alert.alertTime);
+						const alertTimeStr = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}:${String(dt.getSeconds()).padStart(2,'0')}`;
 						return (
 							<div key={alert.id}
-								style={{ display:'grid', gridTemplateColumns:grid, borderBottom: i < displayed.length - 1 ? `1px solid ${T.border}` : 'none', padding:'13px 20px', alignItems:'center', transition:'background 0.1s' }}
+								style={{ display:'grid', gridTemplateColumns:grid, borderBottom: i < displayed.length - 1 ? `1px solid ${T.border}` : 'none', padding:'13px 20px', alignItems:'center', transition:'background 0.1s', minWidth:900 }}
 								onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = T.rowHover}
 								onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'transparent'}>
-								{/* Media icons */}
-								<MediaCell alert={alert} />
-								{/* Severity badge */}
+								{/* ID */}
+								<div style={{ color:T.textMuted, fontSize:13 }}>{alert.id}</div>
+								{/* Alert Time */}
+								<div style={{ color:T.textSecondary, fontSize:12 }}>{alertTimeStr}</div>
+								{/* Alert Type — coloured text, uppercase */}
+								<div style={{ color:typeColor, fontWeight:700, fontSize:12, textTransform:'uppercase', letterSpacing:0.3 }}>{name}</div>
+								{/* Trigger Type */}
 								<div>
-									<span style={{ background:s.bg, color:s.color, border:`1px solid ${s.bg}`, fontSize:11, fontWeight:700, borderRadius:20, padding:'3px 10px', display:'inline-flex', alignItems:'center', gap:5 }}>
-										<span style={{ width:7, height:7, borderRadius:'50%', background:s.dot, display:'inline-block' }} />
-										{sev}
+									<span style={{ background:'#e8f5e9', color:'#2e7d32', border:'1px solid #c8e6c9', fontSize:11, fontWeight:600, borderRadius:5, padding:'2px 10px' }}>
+										{(alert as any).triggerType || 'Event'}
 									</span>
 								</div>
-								<div style={{ color:T.textPrimary, fontWeight:600, fontSize:13 }}>{name}</div>
+								{/* Device ID (IMEI) */}
+								<div style={{ color:T.textSecondary, fontSize:12, fontFamily:'monospace' }}>{alert.imei}</div>
+								{/* Device Name */}
 								<div style={{ color:T.textSecondary, fontSize:12 }}>{alert.deviceName || '—'}</div>
-								<div style={{ color:T.textMuted, fontSize:11, fontFamily:'monospace' }}>{alert.imei}</div>
-								<div>
-									<div style={{ color:T.textSecondary, fontSize:12 }}>{new Date(alert.alertTime).toLocaleString()}</div>
-									<div style={{ color:T.textMuted, fontSize:10, marginTop:2 }}>{timeAgo(alert.alertTime)}</div>
+								{/* Location */}
+								<div style={{ color:T.textMuted, fontSize:11, fontFamily:'monospace' }}>
+									{loc
+										? <a href={`https://maps.google.com/?q=${loc}`} target='_blank' rel='noreferrer'
+											style={{ color:T.purple, textDecoration:'none', fontSize:11 }}>{loc}</a>
+										: '—'}
 								</div>
-								<div>
-									<button onClick={() => onSelectAlert(alert)}
-										style={{ background:'#eff6ff', border:`1px solid #bfdbfe`, borderRadius:7, padding:'6px 10px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.15s' }}
-										onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#1d4ed8'; }}
-										onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#eff6ff'; }}>
-										<IconEye size={15} color="#3b82f6" />
+								{/* Attachment icons */}
+								<AttachmentCell alert={alert} />
+								{/* Actions: View + Dismiss */}
+								<div style={{ display:'flex', gap:8, alignItems:'center' }}>
+									<button title='View details' onClick={() => onSelectAlert(alert)}
+										style={{ background:'#eff6ff', border:`1px solid #bfdbfe`, borderRadius:7, padding:'5px 8px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+										<IconEye size={15} color='#3b82f6' />
+									</button>
+									<button title='Dismiss alert' onClick={() => setDismissed(d => new Set([...d, alert.id]))}
+										style={{ background:'#fffbeb', border:`1px solid #fde68a`, borderRadius:7, padding:'5px 8px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+										<IconDismiss />
 									</button>
 								</div>
 							</div>
