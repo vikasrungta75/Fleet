@@ -641,6 +641,18 @@ const AlertsAndNotifications: FC = () => {
 		};
 	};
 
+	const alertModalProps: any = selectedAlert ? {
+		...selectedAlert,
+		type:       selectedAlert.alertName || selectedAlert.alarmType || selectedAlert.eventType || 'Unknown',
+		severity:   getSeverity(selectedAlert),
+		device:     selectedAlert.deviceName || selectedAlert.imei,
+		imei:       selectedAlert.imei,
+		time:       new Date(selectedAlert.alertTime).toLocaleString(),
+		timeAgo:    timeAgo(selectedAlert.alertTime),
+		location:   (selectedAlert as any).location || '',
+		hasDashcam: alertHasMedia(selectedAlert),
+	} : null;
+
 	return (
 		<PageWrapper isProtected title='Alerts'>
 			<SubHeader>
@@ -671,27 +683,14 @@ const AlertsAndNotifications: FC = () => {
 				{activeTab === 'images' && <ImageAlertsTab />}
 			</Page>
 
-			{selectedAlert && (() => {
-				const alertProps: any = {
-					...selectedAlert,
-					type:       selectedAlert.alertName || selectedAlert.alarmType || selectedAlert.eventType || 'Unknown',
-					severity:   getSeverity(selectedAlert),
-					device:     selectedAlert.deviceName || selectedAlert.imei,
-					imei:       selectedAlert.imei,
-					time:       new Date(selectedAlert.alertTime).toLocaleString(),
-					timeAgo:    timeAgo(selectedAlert.alertTime),
-					location:   (selectedAlert as any).location || '',
-					hasDashcam: alertHasMedia(selectedAlert),
-				};
-				return (
-					<AlertDetailModal
-						alert={alertProps}
-						onClose={() => setSelectedAlert(null)}
-						relatedMedia={getRelatedVideo(selectedAlert)}
-						relatedImage={getRelatedImage(selectedAlert)}
-					/>
-				);
-			})()}
+			{alertModalProps && (
+				<AlertDetailModal
+					alert={alertModalProps}
+					onClose={() => setSelectedAlert(null)}
+					relatedMedia={selectedAlert ? getRelatedVideo(selectedAlert) : undefined}
+					relatedImage={selectedAlert ? getRelatedImage(selectedAlert) : undefined}
+				/>
+			)}
 		</PageWrapper>
 	);
 };
