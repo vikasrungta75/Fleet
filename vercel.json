@@ -1,11 +1,3 @@
-json
 {
   "installCommand": "npm install --legacy-peer-deps"
 }
-```
-
-Then push:
-```
-git add .
-git commit -m "fix vercel build - use npm"
-git push
