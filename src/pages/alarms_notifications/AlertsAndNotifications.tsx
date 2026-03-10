@@ -49,7 +49,7 @@ const SEV: Record<Severity, { bg: string; color: string; dot: string }> = {
 	Critical: { bg: '#fff0f0', color: '#d32f2f', dot: '#d32f2f' },
 	High:     { bg: '#fff4ec', color: '#e65100', dot: '#ff6b35' },
 	Warning:  { bg: '#fffbec', color: '#b45309', dot: '#f59e0b' },
-	Info:     { bg: '#eff6ff', color: '#1d4ed8', dot: '#3b82f6' },
+	Info:     { bg: '#f0eeff', color: '#6c5dd3', dot: '#6c5dd3' },
 	Normal:   { bg: '#f0fdf4', color: '#166534', dot: '#22c55e' },
 };
 
@@ -88,7 +88,7 @@ const IconPhoto: FC<{ size?: number; color?: string }> = ({ size = 18, color = T
 	</svg>
 );
 
-const IconEye: FC<{ size?: number; color?: string }> = ({ size = 16, color = '#3b82f6' }) => (
+const IconEye: FC<{ size?: number; color?: string }> = ({ size = 16, color = T.purple }) => (
 	<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
 		<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
 		<circle cx="12" cy="12" r="3"/>
@@ -141,7 +141,7 @@ const VideoViewerModal: FC<{ url: string; title?: string; ch?: number; onClose: 
 					<IconDashcam size={16} />
 					<span style={{ fontWeight:700, fontSize:14, color:T.textPrimary }}>Video Playback</span>
 					{title && <span style={{ background:T.purpleLight, color:T.purple, fontSize:11, fontWeight:700, borderRadius:5, padding:'2px 8px' }}>{title}</span>}
-					{ch !== undefined && <span style={{ background:'#eff6ff', color:'#1d4ed8', fontSize:11, fontWeight:700, borderRadius:5, padding:'2px 8px' }}>CH {ch}</span>}
+					{ch !== undefined && <span style={{ background:T.purpleLight, color:T.purple, fontSize:11, fontWeight:700, borderRadius:5, padding:'2px 8px' }}>CH {ch}</span>}
 					<button onClick={onClose} style={{ marginLeft:'auto', background:'none', border:'none', color:T.textMuted, fontSize:20, cursor:'pointer', lineHeight:1 }}>✕</button>
 				</div>
 				<div style={{ background:'#111' }}>
@@ -187,7 +187,7 @@ const ImageViewerModal: FC<{ url: string; title?: string; ch?: number; onClose: 
 					<IconPhoto size={16} />
 					<span style={{ fontWeight:700, fontSize:14, color:T.textPrimary }}>Image Detail</span>
 					{title && <span style={{ background:'#fff0f6', color:T.pink, fontSize:11, fontWeight:700, borderRadius:5, padding:'2px 8px' }}>{title}</span>}
-					{ch !== undefined && <span style={{ background:'#eff6ff', color:'#1d4ed8', fontSize:11, fontWeight:700, borderRadius:5, padding:'2px 8px' }}>CH {ch}</span>}
+					{ch !== undefined && <span style={{ background:T.purpleLight, color:T.purple, fontSize:11, fontWeight:700, borderRadius:5, padding:'2px 8px' }}>CH {ch}</span>}
 					<button onClick={onClose} style={{ marginLeft:'auto', background:'none', border:'none', color:T.textMuted, fontSize:20, cursor:'pointer', lineHeight:1 }}>✕</button>
 				</div>
 				<div style={{ background:'#f4f5f9', display:'flex', alignItems:'center', justifyContent:'center', minHeight:280 }}>
@@ -332,7 +332,7 @@ const ALERT_TYPE_COLOR: Record<string, string> = {
 	'Device Normal':      '#2da44e',
 	'About To Sleep':     '#f59e0b',
 	'Ignition Off':       '#6c5dd3',
-	'Ignition On':        '#3b82f6',
+	'Ignition On':        '#6c5dd3',
 	'Emergency Sos':      '#d32f2f',
 	'Emergency SOS':      '#d32f2f',
 	'Hard Braking':       '#e65100',
@@ -342,7 +342,7 @@ const ALERT_TYPE_COLOR: Record<string, string> = {
 	'Overspeed':          '#d32f2f',
 	'Fatigue Detection':  '#7b1fa2',
 	'Phone Use':          '#c62828',
-	'Lane Departure':     '#1565c0',
+	'Lane Departure':     '#6c5dd3',
 	'Collision Warning':  '#b71c1c',
 	'Connection Lost':    '#c62828',
 	'Tailgating':         '#f39c12',
@@ -504,7 +504,7 @@ const AlertsTab: FC<{ onSelectAlert: (a: IotAlert) => void }> = ({ onSelectAlert
 								<div style={{ color:typeColor, fontWeight:700, fontSize:12, textTransform:'uppercase', letterSpacing:0.3 }}>{name}</div>
 								{/* Trigger Type */}
 								<div>
-									<span style={{ background:'#e8f5e9', color:'#2e7d32', border:'1px solid #c8e6c9', fontSize:11, fontWeight:600, borderRadius:5, padding:'2px 10px' }}>
+									<span style={{ background:T.purpleLight, color:T.purple, border:`1px solid ${T.purpleBorder}`, fontSize:11, fontWeight:600, borderRadius:5, padding:'2px 10px' }}>
 										{(alert as any).triggerType || 'Event'}
 									</span>
 								</div>
@@ -524,8 +524,8 @@ const AlertsTab: FC<{ onSelectAlert: (a: IotAlert) => void }> = ({ onSelectAlert
 								{/* Actions: View + Dismiss */}
 								<div style={{ display:'flex', gap:8, alignItems:'center' }}>
 									<button title='View details' onClick={() => onSelectAlert(alert)}
-										style={{ background:'#eff6ff', border:`1px solid #bfdbfe`, borderRadius:7, padding:'5px 8px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
-										<IconEye size={15} color='#3b82f6' />
+										style={{ background:T.purpleLight, border:`1px solid ${T.purpleBorder}`, borderRadius:7, padding:'5px 8px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+										<IconEye size={15} color={T.purple} />
 									</button>
 									<button title='Dismiss alert' onClick={() => setDismissed(d => new Set(Array.from(d).concat(alert.id)))}
 										style={{ background:'#fffbeb', border:`1px solid #fde68a`, borderRadius:7, padding:'5px 8px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
@@ -562,7 +562,7 @@ const VideoCard: FC<{ r: IotResource; onClick: () => void }> = ({ r, onClick }) 
 				<span style={{ background:T.purple, color:'#fff', fontSize:9, fontWeight:800, borderRadius:4, padding:'2px 6px', display:'flex', alignItems:'center', gap:3 }}>
 					<IconDashcam size={9} color="#fff" /> VIDEO
 				</span>
-				<span style={{ background:'rgba(255,255,255,0.92)', color:'#1d4ed8', fontSize:9, fontWeight:700, borderRadius:4, padding:'2px 6px' }}>CH {r.channel}</span>
+				<span style={{ background:'rgba(255,255,255,0.92)', color:T.purple, fontSize:9, fontWeight:700, borderRadius:4, padding:'2px 6px' }}>CH {r.channel}</span>
 			</div>
 		</div>
 		<div style={{ padding:'10px 12px' }}>
@@ -585,7 +585,7 @@ const ImageCard: FC<{ r: IotResource; onClick: () => void }> = ({ r, onClick }) 
 				<span style={{ background:T.pink, color:'#fff', fontSize:9, fontWeight:800, borderRadius:4, padding:'2px 6px', display:'flex', alignItems:'center', gap:3 }}>
 					<IconPhoto size={9} color="#fff" /> IMAGE
 				</span>
-				<span style={{ background:'rgba(255,255,255,0.92)', color:'#1d4ed8', fontSize:9, fontWeight:700, borderRadius:4, padding:'2px 6px' }}>CH {r.channel}</span>
+				<span style={{ background:'rgba(255,255,255,0.92)', color:T.purple, fontSize:9, fontWeight:700, borderRadius:4, padding:'2px 6px' }}>CH {r.channel}</span>
 			</div>
 		</div>
 		<div style={{ padding:'10px 12px' }}>
@@ -742,7 +742,7 @@ const AlertsAndNotifications: FC = () => {
 		<PageWrapper isProtected title='Alerts'>
 			<SubHeader>
 				<SubHeaderLeft>
-					<span style={{ fontSize:20, fontWeight:700, color:T.textPrimary }}>Alerts & Notifications</span>
+					<span style={{ fontSize:20, fontWeight:700, color:T.pink }}>Alerts & Notifications</span>
 				</SubHeaderLeft>
 			</SubHeader>
 			<Page>
@@ -752,10 +752,10 @@ const AlertsAndNotifications: FC = () => {
 						<button key={tab.id} onClick={() => setActiveTab(tab.id)}
 							style={{
 								background:'none', border:'none',
-								borderBottom: activeTab === tab.id ? `2px solid ${T.purple}` : '2px solid transparent',
+								borderBottom: activeTab === tab.id ? `2px solid ${T.pink}` : '2px solid transparent',
 								marginBottom:-2, padding:'10px 22px', cursor:'pointer',
 								fontWeight: activeTab === tab.id ? 700 : 500, fontSize:14,
-								color: activeTab === tab.id ? T.purple : T.textMuted,
+								color: activeTab === tab.id ? T.pink : T.textMuted,
 								display:'flex', alignItems:'center', gap:7, transition:'color 0.15s',
 							}}>
 							{tab.icon} {tab.label}
