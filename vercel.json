@@ -3,7 +3,15 @@
   "buildCommand": "DISABLE_ESLINT_PLUGIN=true npm run build",
   "rewrites": [
     {
-      "source": "/api-proxy/:path*",
+      "source": "/cxf-proxy/:path*",
+      "destination": "https://platform.ravity.io/cxf/:path*"
+    },
+    {
+      "source": "/rest-proxy/:path*",
+      "destination": "https://platform.ravity.io/services/api/:path*"
+    },
+    {
+      "source": "/ingestion-proxy/:path*",
       "destination": "https://platform.ravity.io/:path*"
     }
   ]
