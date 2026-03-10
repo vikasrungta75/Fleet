@@ -54,14 +54,31 @@ interface CapturePanelProps {
   captureProgress: string;
 }
 
+const Stepper: FC<{ label: string; value: number; min: number; max: number; onChange: (v: number) => void }> = ({ label, value, min, max, onChange }) => (
+  <div style={{ flex: 1 }}>
+    <div style={{ fontSize: 10, color: T.textMuted, marginBottom: 6, fontWeight: 600 }}>{label}</div>
+    <div style={{ display: 'flex', alignItems: 'center', border: `1px solid ${T.border}`, borderRadius: 6, overflow: 'hidden', background: '#fff' }}>
+      <button onClick={() => onChange(Math.max(min, value - 1))}
+        style={{ width: 30, height: 34, background: '#f5f5f5', border: 'none', cursor: value <= min ? 'not-allowed' : 'pointer', fontSize: 16, color: value <= min ? '#ccc' : T.textPrimary, flexShrink: 0 }}>−</button>
+      <span style={{ flex: 1, textAlign: 'center', fontSize: 14, fontWeight: 700, color: T.textPrimary }}>{value}</span>
+      <button onClick={() => onChange(Math.min(max, value + 1))}
+        style={{ width: 30, height: 34, background: '#f5f5f5', border: 'none', cursor: value >= max ? 'not-allowed' : 'pointer', fontSize: 16, color: value >= max ? '#ccc' : T.textPrimary, flexShrink: 0 }}>+</button>
+    </div>
+    <div style={{ fontSize: 9, color: T.textMuted, marginTop: 3, textAlign: 'center' }}>max {max}</div>
+  </div>
+);
+
 const CapturePanel: FC<CapturePanelProps> = ({ onSingleCapture, onMultiCapture, onVideoCapture, isCapturing, captureProgress }) => {
   const [mode, setMode] = useState<CaptureMode>('single');
   const [open, setOpen] = useState(false);
+  const [photoCount, setPhotoCount] = useState(5);
+  const [intervalSec, setIntervalSec] = useState(3);
+  const [videoDuration, setVideoDuration] = useState(10);
 
   const handleCapture = () => {
     if (mode === 'single') { onSingleCapture(); setOpen(false); }
-    else if (mode === 'multi') { onMultiCapture(5, 3); setOpen(false); }
-    else { onVideoCapture(10); setOpen(false); }
+    else if (mode === 'multi') { onMultiCapture(photoCount, intervalSec); setOpen(false); }
+    else { onVideoCapture(videoDuration); setOpen(false); }
   };
 
   const modes: { key: CaptureMode; icon: string; label: string; sub: string }[] = [
@@ -69,6 +86,12 @@ const CapturePanel: FC<CapturePanelProps> = ({ onSingleCapture, onMultiCapture, 
     { key: 'multi',  icon: '📷', label: 'Multi Photos',  sub: 'Timed captures' },
     { key: 'video',  icon: '🎬', label: 'Video Record',  sub: 'Continuous recording' },
   ];
+
+  const actionLabel = mode === 'single'
+    ? '📷 Capture Now'
+    : mode === 'multi'
+    ? `📷 Start (${photoCount} photos, ${intervalSec}s gap)`
+    : `🎬 Record ${videoDuration}s`;
 
   return (
     <div style={{ position: 'relative' }}>
@@ -80,8 +103,10 @@ const CapturePanel: FC<CapturePanelProps> = ({ onSingleCapture, onMultiCapture, 
       {open && !isCapturing && (
         <>
           <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setOpen(false)} />
-          <div style={{ position: 'absolute', bottom: 46, right: 0, background: '#fff', border: `1px solid ${T.border}`, borderRadius: 12, padding: 16, width: 340, boxShadow: '0 8px 32px rgba(0,0,0,0.18)', zIndex: 100 }}>
+          <div style={{ position: 'absolute', bottom: 46, right: 0, background: '#fff', border: `1px solid ${T.border}`, borderRadius: 12, padding: 16, width: 360, boxShadow: '0 8px 32px rgba(0,0,0,0.18)', zIndex: 100 }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: T.textPrimary, marginBottom: 12 }}>Capture Mode</div>
+
+            {/* Mode selector */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 14 }}>
               {modes.map(m => (
                 <div key={m.key} onClick={() => setMode(m.key)}
@@ -93,23 +118,25 @@ const CapturePanel: FC<CapturePanelProps> = ({ onSingleCapture, onMultiCapture, 
               ))}
             </div>
 
+            {/* Multi photo settings */}
             {mode === 'multi' && (
-              <div style={{ display: 'flex', gap: 12, marginBottom: 14, background: '#f8f9fa', borderRadius: 8, padding: '10px 12px' }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 10, color: T.textMuted, marginBottom: 4, fontWeight: 600 }}>Snapshot Interval (seconds)</div>
-                  <div style={{ background: '#fff', border: `1px solid ${T.border}`, borderRadius: 6, padding: '6px 10px', fontSize: 13, fontWeight: 600, color: T.textPrimary, textAlign: 'center' }}>3</div>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 10, color: T.textMuted, marginBottom: 4, fontWeight: 600 }}>Photo Count</div>
-                  <div style={{ background: '#fff', border: `1px solid ${T.border}`, borderRadius: 6, padding: '6px 10px', fontSize: 13, fontWeight: 600, color: T.textPrimary, textAlign: 'center' }}>5</div>
-                </div>
+              <div style={{ display: 'flex', gap: 12, marginBottom: 14, background: '#f8f9fa', borderRadius: 8, padding: '12px' }}>
+                <Stepper label="Snapshot Interval (s)" value={intervalSec} min={1} max={10} onChange={setIntervalSec} />
+                <Stepper label="Photo Count" value={photoCount} min={2} max={10} onChange={setPhotoCount} />
               </div>
             )}
 
+            {/* Video settings */}
             {mode === 'video' && (
-              <div style={{ marginBottom: 14, background: '#f8f9fa', borderRadius: 8, padding: '10px 12px' }}>
-                <div style={{ fontSize: 10, color: T.textMuted, marginBottom: 4, fontWeight: 600 }}>Recording Duration (seconds)</div>
-                <div style={{ background: '#fff', border: `1px solid ${T.border}`, borderRadius: 6, padding: '6px 10px', fontSize: 13, fontWeight: 600, color: T.textPrimary, textAlign: 'center', width: 100 }}>10</div>
+              <div style={{ marginBottom: 14, background: '#f8f9fa', borderRadius: 8, padding: '12px' }}>
+                <Stepper label="Recording Duration (seconds)" value={videoDuration} min={5} max={30} onChange={setVideoDuration} />
+              </div>
+            )}
+
+            {/* Single photo info */}
+            {mode === 'single' && (
+              <div style={{ marginBottom: 14, background: '#f8f9fa', borderRadius: 8, padding: '10px 12px', fontSize: 11, color: T.textMuted, textAlign: 'center' }}>
+                Captures current frame as a PNG image
               </div>
             )}
 
@@ -118,7 +145,7 @@ const CapturePanel: FC<CapturePanelProps> = ({ onSingleCapture, onMultiCapture, 
                 style={{ flex: 1, background: '#f5f5f5', border: `1px solid ${T.border}`, color: T.textSecondary, borderRadius: 6, padding: '8px 0', cursor: 'pointer', fontSize: 12 }}>Cancel</button>
               <button onClick={handleCapture}
                 style={{ flex: 2, background: T.purple, border: 'none', color: '#fff', borderRadius: 6, padding: '8px 0', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>
-                {mode === 'single' ? '📷 Capture Now' : mode === 'multi' ? '📷 Start (5 photos, 3s)' : '🎬 Record 10s'}
+                {actionLabel}
               </button>
             </div>
           </div>
