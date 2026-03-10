@@ -8,6 +8,17 @@ export const dashboardMenu = {
         searchable: true,
         hide: false,
     },
+
+    aiFleetManager: {
+        id: 'ai-fleet-manager',
+        text: 'AI Fleet Manager',
+        path: 'ai-fleet-manager',
+        icon: 'SmartToy',
+        subMenu: null,
+        searchable: true,
+        hide: false,
+    },
+
     overview: {
         id: 'overview',
         text: 'Overview',
@@ -26,6 +37,28 @@ export const dashboardMenu = {
         searchable: true,
         hide: false,
     },
+
+
+    liveMonitor: {
+        id: 'live-monitor',
+        text: 'Live Monitor',
+        path: 'live-monitor',
+        icon: 'Videocam',
+        subMenu: null,
+        searchable: true,
+        hide: false,
+     },
+
+    tripHistory: {
+        id: 'trip-history',
+        text: 'Trip History',
+        path: 'trip-history',
+        icon: 'History',
+        subMenu: null,
+        searchable: true,
+        hide: false,
+    },
+
  
     alertsNotifications: {
         id: 'alerts&notifications',
@@ -47,7 +80,7 @@ export const dashboardMenu = {
         hide: false,
     },
  
-    reports: {
+    	reports: {
         id: 'see_all_report',
         text: 'Reports',
         path: 'reports',
@@ -57,6 +90,16 @@ export const dashboardMenu = {
         hide: false,
     },
  
+
+    alerts: {
+        id: 'alerts',
+        text: 'Alerts',
+        path: 'alerts',
+        icon: 'NotificationsActive',
+        subMenu: null,
+        searchable: true,
+        hide: false,
+    },
     driverleaderbord: {
         id: 'see_all_driverleader',
         text: 'Driver Leaderbord',
@@ -115,7 +158,7 @@ export const dashboardMenu = {
             },
             alerts: {
                 id: 'see_all_alerts',
-                text: 'Alerts',
+                text: 'Create Alerts',
                 path: 'setup/alerts',
                 icon: 'Notifications',
                 searchable: true,

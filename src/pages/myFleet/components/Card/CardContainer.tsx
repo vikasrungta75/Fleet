@@ -10,6 +10,8 @@ import filterButton from '../../../../assets/img/filterButton.png';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import HistoryDetailsCard from './HistoryDetailsCard';
+import DashcamTab from './DashcamTab';
+import TripHistoryTab from './TripHistoryTab';
 import { useTranslation } from 'react-i18next';
 import i18next from 'i18next';
 import ThemeContext from '../../../../contexts/themeContext';
@@ -43,22 +45,43 @@ const TabHeader = ({ tab, setTab }: any) => {
 	const { t } = useTranslation(['vehicles']);
 
 	return (
-		<div className='tabHeaderOne'>
+		<div className='tabHeaderOne' style={{ display: 'flex' }}>
 			<div
-				className={`w-50 bg-white  ${isActive('FleetDetailsCard')} tab-title`}
+				className={`bg-white ${isActive('FleetDetailsCard')} tab-title`}
+				style={{ flex: 1 }}
 				onClick={(e) => {
 					e.preventDefault();
 					switchTab('FleetDetailsCard');
 				}}>
 				<title className='text-center'>{t('All Vehicles')}</title>
 			</div>
+			{/* ── Dashcam tab (new) ── */}
 			<div
-				className={`w-50 bg-white tab-title ${isActive('HistoryDetailsCard')} `}
+				className={`bg-white ${isActive('DashcamTab')} tab-title`}
+				style={{ flex: 1 }}
+				onClick={(e) => {
+					e.preventDefault();
+					switchTab('DashcamTab');
+				}}>
+				<title className='text-center'>{t('Dashcam')}</title>
+			</div>
+			<div
+				className={`bg-white tab-title ${isActive('HistoryDetailsCard')} `}
+				style={{ flex: 1 }}
 				onClick={(e) => {
 					e.preventDefault();
 					switchTab('HistoryDetailsCard');
 				}}>
 				<title className='text-center'>{t('History')}</title>
+			</div>
+			<div
+				className={`bg-white tab-title ${isActive('TripHistoryTab')} `}
+				style={{ flex: 1 }}
+				onClick={(e) => {
+					e.preventDefault();
+					switchTab('TripHistoryTab');
+				}}>
+				<title className='text-center'>{t('Trip')}</title>
 			</div>
 		</div>
 	);
@@ -116,6 +139,9 @@ const CardMap: FC<ICardProps> = ({ setIsSettingVisible, setIsModalOpen }) => {
 	useEffect(() => {
 		if (tab === 'FleetDetailsCard') {
 			setisDetailSelected(true);
+			setShowDatePicker1(false);
+		} else if (tab === 'DashcamTab') {
+			setisDetailSelected(false);
 			setShowDatePicker1(false);
 		} else {
 			setisDetailSelected(false);
@@ -295,21 +321,27 @@ const CardMap: FC<ICardProps> = ({ setIsSettingVisible, setIsModalOpen }) => {
 							/>
 
 							<TabHeader tab={tab} setTab={setTab} />
-							<FilterCard
-								showFilterPanel={showFilterPanel}
-								setIsModalOpen={setIsModalOpen}
-								showSortPanel={showSortPanel}
-								setShowSortPanel={setshowSortPanel}
-								setshowFilterPanel={setshowFilterPanel}
-								checkedFilter={checkedFilter}
-								setCreteria={updateCreteria}
-								withRangeFilter={tab === 'HistoryDetailsCard'}
-								setCheckedFilter={setcheckedFilter}
-								isDetailSelected={isDetailSelected}
-								showDatePicker2={setShowDatePicker1}
-								setSelectedToShowMap1={setSelectedToShowMap1} // Pass the function to the chil
-								updateVins={(newVins) => formik.setFieldValue('vins', newVins)} // Funct
-							/>
+							{tab === 'DashcamTab' ? (
+								<DashcamTab />
+							) : tab === 'TripHistoryTab' ? (
+								<TripHistoryTab />
+							) : (
+								<FilterCard
+									showFilterPanel={showFilterPanel}
+									setIsModalOpen={setIsModalOpen}
+									showSortPanel={showSortPanel}
+									setShowSortPanel={setshowSortPanel}
+									setshowFilterPanel={setshowFilterPanel}
+									checkedFilter={checkedFilter}
+									setCreteria={updateCreteria}
+									withRangeFilter={tab === 'HistoryDetailsCard'}
+									setCheckedFilter={setcheckedFilter}
+									isDetailSelected={isDetailSelected}
+									showDatePicker2={setShowDatePicker1}
+									setSelectedToShowMap1={setSelectedToShowMap1} // Pass the function to the chil
+									updateVins={(newVins) => formik.setFieldValue('vins', newVins)} // Funct
+								/>
+							)}
 						</>
 					)}
 				</CardBody>

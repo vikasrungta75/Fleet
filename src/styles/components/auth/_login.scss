@@ -3,6 +3,9 @@
 	display: flex;
 	flex-direction: row;
 	align-items: center;
+	position: relative;
+	min-height: 100vh;
+	overflow: hidden;
 
 	.card {
 		max-width: 500px;
@@ -10,11 +13,15 @@
 		max-height: 900px;
 		height: 100vh;
 		min-height: 600px;
+		position: relative;
+		z-index: 1;
 	}
 	.card-body {
 		display: flex;
 		justify-content: flex-end;
 		align-items: flex-end;
+		position: relative;
+		z-index: 1;
 	}
 
 	.reset-form {
@@ -26,14 +33,15 @@
 	content: '';
 	background-image: url('../../../assets/full-bg.png');
 	opacity: 1;
-	background-size: 100% auto;
+	background-size: cover;
 	background-repeat: no-repeat;
-	background-position: center;
-	position: absolute;
+	background-position: center left;
+	position: fixed;
 	top: 0px;
-	right: 620px;
+	right: 42%;
 	bottom: 0px;
 	left: 0px;
+	z-index: 0;
 }
 
 @media screen and (max-width: 480px) {
@@ -76,17 +84,17 @@
 }
 
 .no-shadow {
-	box-shadow: none !important; // Use !important if necessary to override existing styles
+	box-shadow: none !important;
 }
 .no-border {
-	border: none !important; // Use !important if necessary to override existing styles
+	border: none !important;
 }
 
 .text-blue- {
-	color: #4c80ff; // Set the text color to blue
-	cursor: pointer; // Change cursor to pointer for better UX
+	color: #4c80ff;
+	cursor: pointer;
 	&:hover {
-		color: darkblue; // Optional: Change color on hover
+		color: darkblue;
 	}
 }
 .responsive-img {
@@ -95,7 +103,7 @@
 }
 
 .custom-margin {
-	margin-top: 44px; // Adjust this value as needed to match your desired spacing
+	margin-top: 44px;
 }
 
 .small-font {

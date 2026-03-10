@@ -18,22 +18,30 @@ import {
 } from '../menu';
 import Login from '../pages/auth/login/Login';
 
+const LiveMonitor = lazy(() => import('../pages/liveStreaming/LiveStreaming'));
+const StreamDiagnostic = lazy(() => import('../pages/liveStreaming/StreamDiagnostic'));
+const AIFleetManager = lazy(() => import('../pages/aiFleetManager/AIFleetManager'));
+const AlertsAndNotifications = lazy(() => import('../pages/alarms_notifications/AlertsAndNotifications'));
+// eslint-disable-next-line import/no-unresolved, import/extensions
+const TripHistory = lazy(() => import('../pages/tripHistory/TripHistory'));
+
+
 const onSearch = (query: string) => {
-	// dispatch.appStoreNoPersist.changeFilterMaintenance({
-	//     vin_filter: query !==''?query: 'All',
-	//     status_filter: 'All',
-	//     sort: 1,
-	//     sortField: 'vin',
-	// });
+    // dispatch.appStoreNoPersist.changeFilterMaintenance({
+    //     vin_filter: query !==''?query: 'All',
+    //     status_filter: 'All',
+    //     sort: 1,
+    //     sortField: 'vin',
+    // });
 };
 
 const ERRORS = {
-	PAGE_404: lazy(() => import('../pages/common/error/Page404')),
-	BUILDING_PAGE: lazy(() => import('../pages/common/error/BuildPage')),
+    PAGE_404: lazy(() => import('../pages/common/error/Page404')),
+    BUILDING_PAGE: lazy(() => import('../pages/common/error/BuildPage')),
 };
 const AUTH = {
-	RESET_PASSWORD: lazy(() => import('../pages/auth/resetPassword/ResetPassword')),
-	FORGET_PASSWORD: lazy(() => import('../pages/auth/forgetPassword/ForgetPassword')),
+    RESET_PASSWORD: lazy(() => import('../pages/auth/resetPassword/ResetPassword')),
+    FORGET_PASSWORD: lazy(() => import('../pages/auth/forgetPassword/ForgetPassword')),
 };
 
 const APP = {
@@ -130,12 +138,13 @@ const APP = {
             () => import('../pages/settings/super-admin-panel/CreateReadUpdate'),
         ),
     },
-    FLEETCOPILOT:{
-        FLEETCOPILOT:lazy(() => import('../pages/fleetcopilot/fleetcopilot')),
+    FLEETCOPILOT: {
+        FLEETCOPILOT: lazy(() => import('../pages/fleetcopilot/fleetcopilot')),
     },
+    
     WORKFLOW: {
-        TASK_OVERVIEW: lazy(() => import('../pages/workFlow/TaskOverview')),   
-        TASK_MONITORING: lazy(() => import('../pages/workFlow/WorkFlow')),  
+        TASK_OVERVIEW: lazy(() => import('../pages/workFlow/TaskOverview')),
+        TASK_MONITORING: lazy(() => import('../pages/workFlow/WorkFlow')),
         ADDWORKFLOW: lazy(() => import('../pages/workFlow/AddTask')),
     },
 };
@@ -148,6 +157,24 @@ const presentation = [
         exact: true,
     },
 
+    {
+        path: dashboardMenu.liveMonitor.path,
+        element: <LiveMonitor />,
+        exact: true,
+    },
+
+    {
+        path: 'stream-diagnostic',
+        element: <StreamDiagnostic />,
+        exact: true,
+    },
+
+    {
+        path: dashboardMenu.tripHistory.path,
+        element: <TripHistory />,
+        exact: true,
+    },
+
     /* OVERVIEW */
     {
         path: dashboardMenu.overview.path,
@@ -155,7 +182,7 @@ const presentation = [
         exact: true,
     },
 
-       /* Fleet Copilot */
+    /* Fleet Copilot */
     {
         path: dashboardMenu.fleetcopilot.path,
         element: <APP.FLEETCOPILOT.FLEETCOPILOT />,
@@ -163,12 +190,6 @@ const presentation = [
     },
 
     /* ALERTS & NOTIFICATIONS */
-
-    {
-        path: dashboardMenu.alertsNotifications.path,
-        element: <APP.ALARMS_NOTIFICATIONS.ALARMS_FLEET />,
-        exact: true,
-    },
 
     {
         path: `${alertsNotificationsPages.alertsDetails.path}/:vin/:datetime`,
@@ -224,6 +245,19 @@ const presentation = [
         element: <APP.ALARMS_NOTIFICATIONS.CREATE_UPDATE_ALERT />,
         exact: true,
     },
+
+    {
+        path: dashboardMenu.aiFleetManager.path,
+        element: <AIFleetManager />,
+        exact: true,
+    },
+    {
+        path: dashboardMenu.alerts.path,
+        element: <AlertsAndNotifications />,
+        exact: true,
+    },
+
+
     {
         path: alertsNotificationsPages.editAlert.path,
         element: <APP.ALARMS_NOTIFICATIONS.CREATE_UPDATE_ALERT isEditing />,

@@ -1,189 +1,120 @@
-import React, { FC, useCallback, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import classNames from 'classnames';
-import PageWrapper from '../../../layout/PageWrapper/PageWrapper';
-import Page from '../../../layout/Page/Page';
-import Card, { CardBody } from '../../../components/bootstrap/Card';
-import FormGroup from '../../../components/bootstrap/forms/FormGroup';
-import Input from '../../../components/bootstrap/forms/Input';
-import Button from '../../../components/bootstrap/Button';
+import React, { FC, useContext, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
-import '../../../styles/components/auth/_login.scss';
-import Spinner from '../../../components/bootstrap/Spinner';
-import { RootState, store } from '../../../store/store';
-import { authPages } from '../../../menu';
+import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import ConfirmPage from '../ConfirmPage';
-import { useSelector } from 'react-redux';
-import ValcodeLogo from '../../../assets/svg/logo3.svg';
- 
+import { authPages } from '../../../menu';
+import AuthContext from '../../../contexts/authContext';
+import { store } from '../../../store/store';
+
 export interface LocationStateInterface {
-    from: string;
-    message: string;
+	from: string;
+	message?: string;
 }
- 
+
 const Login: FC = () => {
-    let location = useLocation();
-    const state = location.state as LocationStateInterface;
-    const { dispatch } = store;
-    const [isLoading, setIsLoading] = useState(false);
- 
-    const navigate = useNavigate();
-    const handleOnClick = useCallback(() => navigate('overview'), [navigate]);
-    const { t } = useTranslation(['authPage']);
- 
-    const formik = useFormik({
-        enableReinitialize: true,
-        initialValues: {
-            userid: '',
-            password: '',
-        },
-        validate: (values) => {
-            const errors: { userid?: string; password?: string } = {};
- 
-            if (!values.userid) {
-                errors.userid = `${t('Required')}`;
-            } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(values.userid)) {
-                errors.userid = t('Invalid email address');
-            }
- 
-            if (!values.password) {
-                errors.password = `${t('Required')}`;
-            }
- 
-            return errors;
-        },
-        validateOnChange: false,
-        onSubmit: async (values) => {
-            setIsLoading(true);
-            await dispatch.auth.getLogin(values).then(() => {
-                const { auth } = store.getState();
-                if (auth.success) {
-                    handleOnClick();
-                } else {
-                    formik.setFieldError('password', t(auth.message));
-                    formik.setFieldError('userid', ' ');
-                }
-            });
-            setIsLoading(false);
-        },
-    });
- 
-    // const checkValidityOfToken = async () => {
-    //  await dispatch.auth.GetValiditOfTokenAsync().then((res: any) => {
-    //      if (res) {
-    //          navigate(-1);
-    //      } else {
-    //          return;
-    //      }
-    //  });
-    // };
- 
-    // React.useEffect(() => {
-    //  checkValidityOfToken();
-    //  // eslint-disable-next-line react-hooks/exhaustive-deps
-    // }, []);
- 
-    const { dir } = useSelector((stateRematch: RootState) => stateRematch.appStore);
- 
-    return state?.from !== 'editProfile' ? (
-        <PageWrapper isProtected={false} title='Login' className={classNames('page-wrapper-login')}>
-            <div className='text-start position-absolute top-0 start-0 end-0 pt-1 ms-3'>
-                <img src={ValcodeLogo} width='100' alt='Valcode Logo' className='responsive-img' />
-            </div>
-            <Page>
-                <div className='row h-100  align-items-end justify-content-end position-absolute top-0 start-0 end-0'>
-                    <div className='col-xl-5 col-lg-6 col-md-8 no-shadow'>
-                        <Card className='no-shadow no-border rounded-0 ' data-tour='login-page'>
-                            <CardBody className='no-shadow no-border d-flex flex-column justify-content-start'>
-                                <form className='row g-4 m-auto position-absolute top-15 start-0 end-10'>
-                                    <div className='text-center h1 fw-bold custom-text-color '>
-                                        {t('SIGN IN')}
-                                    </div>
-                                    <div className='text-center custom-text-color- mt-0 mb-4 '>
-                                        {t('Enter your email and password to login')}
-                                    </div>
-                                    <div className='col-12'>
-                                        <FormGroup id='userid' isFloating label={t('Email')}>
-                                            <Input
-                                                autoComplete='Email'
-                                                value={formik.values.userid}
-                                                isTouched={formik.touched.userid}
-                                                invalidFeedback={formik.errors.userid}
-                                                isValid={formik.isValid}
-                                                onChange={formik.handleChange}
-                                                onBlur={formik.handleBlur}
-                                                onFocus={() => {
-                                                    formik.setErrors({});
-                                                }}
-                                               
-                                                className={classNames({
-                                                    'is-invalid':
-                                                        formik.touched.userid &&
-                                                        formik.errors.userid,
-                                                    'is-valid':
-                                                        formik.touched.userid &&
-                                                        !formik.errors.userid,
-                                                })}
-                                            />
-                                        </FormGroup>
-                                    </div>
-                                    <div className='col-12'>
-                                        <FormGroup id='password' isFloating label={t('Password')}>
-                                            <Input
-                                                type='password'
-                                                autoComplete='current-password'
-                                                value={formik.values.password}
-                                                isTouched={formik.touched.password}
-                                                invalidFeedback={formik.errors.password}
-                                                isValid={formik.isValid}
-                                                onChange={formik.handleChange}
-                                                onBlur={formik.handleBlur}
-                                                showPasswordOption
-                                                dir={dir}
-                                            />
-                                        </FormGroup>
-                                    </div>
- 
-                                    <p className='text-end'>
-                                        {t('Forgot Password?')}{' '}
-                                        <span
-                                            role='button'
-                                            className='text-blue-'
-                                            onClick={() => {
-                                                navigate(`/${authPages.forgetPassword.path}`);
-                                            }}>
-                                            {t('Click here')}
-                                        </span>
-                                    </p>
- 
-                                    <div className='col-12'>
-                                        <Button
-                                            className='w-100 py-3 custom-btn-color'
-                                            onClick={formik.handleSubmit}
-                                            type='submit'>
-                                            {t('SIGN IN')}
-                                            {isLoading && (
-                                                <Spinner isSmall inButton className='ms-2' />
-                                            )}
-                                        </Button>
-                                    </div>
-                                    {/* <p className='text-center custom-margin '>
-                                        {t("Don't have an account")}{' '}
-                                        <span role='button' className='text-blue-'>
-                                            <u>{t('SIGN UP')}</u>
-                                        </span>
-                                    </p> */}
-                                </form>
-                            </CardBody>
-                        </Card>
-                    </div>
-                </div>
-            </Page>
-        </PageWrapper>
-    ) : (
-        <ConfirmPage withRedirectButton={false} title={t('Congratulations')} />
-    );
+	const { setUser } = useContext(AuthContext);
+	const dispatch = useDispatch<any>();
+	const navigate = useNavigate();
+	const { t } = useTranslation(['authPage']);
+	const [focusedField, setFocusedField] = useState<string | null>(null);
+
+	const formik = useFormik({
+		initialValues: {
+			loginUsername: '',
+			loginPassword: '',
+		},
+		validate: (values) => {
+			const errors: { loginUsername?: string; loginPassword?: string } = {};
+			if (!values.loginUsername) errors.loginUsername = t('Required');
+			if (!values.loginPassword) errors.loginPassword = t('Required');
+			return errors;
+		},
+		validateOnChange: false,
+		onSubmit: async (values) => {
+			await dispatch.auth
+				.getLogin({
+					userid: values.loginUsername,
+					password: values.loginPassword,
+				})
+				.then(() => {
+					const { auth } = store.getState();
+					if (auth.user?.success || auth.token) {
+						if (setUser) setUser(values.loginUsername);
+						navigate('/overview');
+					} else {
+						formik.setFieldError(
+							'loginPassword',
+							auth.message || t('Invalid credentials'),
+						);
+					}
+				})
+				.catch(() => {
+					formik.setFieldError('loginPassword', t('Login failed. Please try again.'));
+				});
+		},
+	});
+
+	const inputStyle = (field: string): React.CSSProperties => ({
+		width: '100%',
+		padding: '13px 16px',
+		background: 'rgba(255,255,255,0.07)',
+		border: `1px solid ${focusedField === field ? 'rgba(0,200,255,0.8)' : 'rgba(0,200,255,0.3)'}`,
+		borderRadius: 10,
+		color: '#fff',
+		fontSize: 14,
+		outline: 'none',
+		boxSizing: 'border-box' as const,
+		transition: 'border-color 0.2s, box-shadow 0.2s',
+		boxShadow: focusedField === field ? '0 0 0 3px rgba(0,200,255,0.15)' : 'none',
+	});
+
+	return (
+		<div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+			<img src='/login-bg.png' alt=''
+				style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0, filter: 'brightness(1.15)' }} />
+			<div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,10,0.35)', zIndex: 1 }} />
+			<div style={{ position: 'relative', zIndex: 2, width: 440, maxWidth: '92vw', background: 'rgba(5,15,35,0.75)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(0,200,255,0.2)', boxShadow: '0 0 40px rgba(0,180,255,0.15)', borderRadius: 16, padding: '36px 36px 32px' }}>
+				<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 28 }}>
+					<img src='/ravity-logo.png' alt='Ravity' style={{ height: 64, width: 'auto', marginBottom: 12 }} />
+					<p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, margin: 0 }}>Fleet Intelligence Platform</p>
+				</div>
+				<h2 style={{ color: '#fff', fontSize: 22, fontWeight: 700, marginBottom: 22, textAlign: 'center' }}>Sign In</h2>
+				{formik.errors.loginPassword && formik.submitCount > 0 && (
+					<div style={{ background: 'rgba(244,67,54,0.15)', border: '1px solid rgba(244,67,54,0.4)', borderRadius: 8, padding: '10px 14px', marginBottom: 16, color: '#ff8a80', fontSize: 13 }}>
+						⚠️ {formik.errors.loginPassword}
+					</div>
+				)}
+				<form onSubmit={formik.handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+					<div>
+						<label htmlFor='loginUsername' style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Email Address</label>
+						<input id='loginUsername' name='loginUsername' type='text'
+							value={formik.values.loginUsername} onChange={formik.handleChange}
+							onFocus={() => setFocusedField('email')} onBlur={() => setFocusedField(null)}
+							placeholder='Enter your username or email' autoComplete='username'
+							style={inputStyle('email')} />
+					</div>
+					<div>
+						<label htmlFor='loginPassword' style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Password</label>
+						<input id='loginPassword' name='loginPassword' type='password'
+							value={formik.values.loginPassword} onChange={formik.handleChange}
+							onFocus={() => setFocusedField('password')} onBlur={() => setFocusedField(null)}
+							placeholder='Enter your password' autoComplete='current-password'
+							style={inputStyle('password')} />
+					</div>
+					<div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -8 }}>
+						<Link to={`/${authPages.forgetPassword.path}`} style={{ color: 'rgba(0,200,255,0.8)', fontSize: 12, textDecoration: 'none' }}>
+							Forgot Password? Click here
+						</Link>
+					</div>
+					<button type='submit' disabled={formik.isSubmitting}
+						style={{ width: '100%', padding: '13px', background: formik.isSubmitting ? 'rgba(0,150,200,0.5)' : 'linear-gradient(135deg,#00c8ff,#0066ff)', border: 'none', borderRadius: 10, color: '#fff', fontWeight: 700, fontSize: 15, cursor: formik.isSubmitting ? 'not-allowed' : 'pointer', marginTop: 4, letterSpacing: 0.5, boxShadow: formik.isSubmitting ? 'none' : '0 4px 20px rgba(0,150,255,0.4)' }}>
+						{formik.isSubmitting ? '⏳ Signing in...' : 'SIGN IN'}
+					</button>
+				</form>
+			</div>
+		</div>
+	);
 };
- 
+
 export default Login;
