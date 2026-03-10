@@ -83,6 +83,7 @@ const DashcamTab: FC<DashcamTabProps> = ({ preselectedImei }) => {
       }
     }
     return results;
+  };
 
   // ── Load device list ─────────────────────────────────────────────────────────
   const loadDevices = useCallback(async () => {
