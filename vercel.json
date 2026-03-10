@@ -1,4 +1,10 @@
 {
   "installCommand": "npm install --legacy-peer-deps",
-  "buildCommand": "DISABLE_ESLINT_PLUGIN=true npm run build"
+  "buildCommand": "DISABLE_ESLINT_PLUGIN=true npm run build",
+  "rewrites": [
+    {
+      "source": "/api-proxy/:path*",
+      "destination": "https://platform.ravity.io/:path*"
+    }
+  ]
 }
