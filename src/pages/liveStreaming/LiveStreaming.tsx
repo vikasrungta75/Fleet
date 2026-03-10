@@ -385,7 +385,7 @@ export const LiveStreamModal: FC<{ device: DeviceWithChannels; onClose: () => vo
   // ── Single capture ──────────────────────────────────────────────────────────
   const handleSingleCapture = () => {
     const url = snapFrame(); if (!url) return;
-    setCapturedThumbs(t => [{ url, type: 'capture' }, ...t].slice(0, 8));
+    setCapturedThumbs(t => [{ url, type: 'capture' as const }, ...t].slice(0, 8));
     setFlash(true); setTimeout(() => setFlash(false), 250);
     capturedMediaStore.unshift({ id: `cap_${Date.now()}`, imei: device.imei, channel: ch.ch, channelLabel: ch.label, dataUrl: url, timestamp: new Date().toISOString(), type: 'capture' });
     const a = document.createElement('a'); a.href = url;
@@ -399,7 +399,7 @@ export const LiveStreamModal: FC<{ device: DeviceWithChannels; onClose: () => vo
       setCaptureProgress(`Photo ${i + 1}/${count}…`);
       const url = snapFrame();
       if (url) {
-        setCapturedThumbs(t => [{ url, type: 'capture' }, ...t].slice(0, 8));
+        setCapturedThumbs(t => [{ url, type: 'capture' as const }, ...t].slice(0, 8));
         setFlash(true); setTimeout(() => setFlash(false), 200);
         capturedMediaStore.unshift({ id: `cap_${Date.now()}_${i}`, imei: device.imei, channel: ch.ch, channelLabel: ch.label, dataUrl: url, timestamp: new Date().toISOString(), type: 'capture' });
         const a = document.createElement('a'); a.href = url;
@@ -429,7 +429,7 @@ export const LiveStreamModal: FC<{ device: DeviceWithChannels; onClose: () => vo
       const url = URL.createObjectURL(blob);
       // Thumbnail: first frame snap
       const thumb = snapFrame() || '';
-      setCapturedThumbs(t => [{ url: thumb, type: 'video' }, ...t].slice(0, 8));
+      setCapturedThumbs(t => [{ url: thumb, type: 'video' as const }, ...t].slice(0, 8));
       capturedMediaStore.unshift({ id: `vid_${Date.now()}`, imei: device.imei, channel: ch.ch, channelLabel: ch.label, dataUrl: thumb, timestamp: new Date().toISOString(), type: 'video', videoBlob: blob, durationSec });
       const a = document.createElement('a'); a.href = url;
       a.download = `video_${device.imei}_ch${ch.ch}_${Date.now()}.webm`; a.click();
@@ -498,7 +498,7 @@ export const LiveStreamModal: FC<{ device: DeviceWithChannels; onClose: () => vo
               {device._channels.map((_, idx) => (
                 <VideoPanel key={idx} device={device} channelIdx={idx}
                   onCapture={(url, channel) => {
-                    setCapturedThumbs(t => [{ url, type: 'capture' }, ...t].slice(0, 8));
+                    setCapturedThumbs(t => [{ url, type: 'capture' as const }, ...t].slice(0, 8));
                     capturedMediaStore.unshift({ id: `cap_${Date.now()}`, imei: device.imei, channel: channel.ch, channelLabel: channel.label, dataUrl: url, timestamp: new Date().toISOString(), type: 'capture' });
                   }} />
               ))}
