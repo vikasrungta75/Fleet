@@ -8,6 +8,7 @@ import {
   stopLiveVideo,
   resolveStreamUrls,
   isDashcam,
+  wakeupDevice,
   type IotDevice,
 } from '../../services/dashcamService';
 
@@ -358,8 +359,7 @@ const VideoPanel: FC<{ device: DeviceWithChannels; channelIdx: number; onCapture
     const url = canvas.toDataURL('image/png');
     onCapture(url, ch);
     setFlash(true); setTimeout(() => setFlash(false), 250);
-    const a = document.createElement('a'); a.href = url;
-    a.download = `capture_${device.imei}_ch${ch.ch}_${Date.now()}.png`; a.click();
+    // Saved via onCapture callback to Alert Images section — no download
   };
 
   return (
@@ -443,8 +443,7 @@ export const LiveStreamModal: FC<{ device: DeviceWithChannels; onClose: () => vo
     setCapturedThumbs(t => [{ url, type: 'capture' as const }, ...t].slice(0, 8));
     setFlash(true); setTimeout(() => setFlash(false), 250);
     capturedMediaStore.unshift({ id: `cap_${Date.now()}`, imei: device.imei, channel: ch.ch, channelLabel: ch.label, dataUrl: url, timestamp: new Date().toISOString(), type: 'capture' });
-    const a = document.createElement('a'); a.href = url;
-    a.download = `capture_${device.imei}_ch${ch.ch}_${Date.now()}.png`; a.click();
+    // Saved to Alert Images section — no download
   };
 
   // ── Multi capture ────────────────────────────────────────────────────────────
@@ -457,8 +456,7 @@ export const LiveStreamModal: FC<{ device: DeviceWithChannels; onClose: () => vo
         setCapturedThumbs(t => [{ url, type: 'capture' as const }, ...t].slice(0, 8));
         setFlash(true); setTimeout(() => setFlash(false), 200);
         capturedMediaStore.unshift({ id: `cap_${Date.now()}_${i}`, imei: device.imei, channel: ch.ch, channelLabel: ch.label, dataUrl: url, timestamp: new Date().toISOString(), type: 'capture' });
-        const a = document.createElement('a'); a.href = url;
-        a.download = `capture_${device.imei}_ch${ch.ch}_${i + 1}of${count}_${Date.now()}.png`; a.click();
+        // Saved to Alert Images section — no download
       }
       if (i < count - 1) await new Promise(r => setTimeout(r, intervalSec * 1000));
     }
@@ -486,8 +484,7 @@ export const LiveStreamModal: FC<{ device: DeviceWithChannels; onClose: () => vo
       const thumb = snapFrame() || '';
       setCapturedThumbs(t => [{ url: thumb, type: 'video' as const }, ...t].slice(0, 8));
       capturedMediaStore.unshift({ id: `vid_${Date.now()}`, imei: device.imei, channel: ch.ch, channelLabel: ch.label, dataUrl: thumb, timestamp: new Date().toISOString(), type: 'video', videoBlob: blob, durationSec });
-      const a = document.createElement('a'); a.href = url;
-      a.download = `video_${device.imei}_ch${ch.ch}_${Date.now()}.webm`; a.click();
+      // Saved to Dashcam Video section — no download
       URL.revokeObjectURL(url);
       setIsCapturing(false); setCaptureProgress('');
     };
@@ -609,6 +606,53 @@ export const LiveStreamModal: FC<{ device: DeviceWithChannels; onClose: () => vo
 };
 
 // ── Main Page ──────────────────────────────────────────────────────────────────
+// ── Wake Button ────────────────────────────────────────────────────────────────
+const WakeButton: FC<{ imei: string }> = ({ imei }) => {
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+
+  const handleWake = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // don't trigger device select
+    setStatus('sending');
+    try {
+      await wakeupDevice(imei);
+      setStatus('sent');
+      setTimeout(() => setStatus('idle'), 4000);
+    } catch {
+      setStatus('error');
+      setTimeout(() => setStatus('idle'), 3000);
+    }
+  };
+
+  const label = status === 'sending' ? 'Waking…'
+    : status === 'sent'    ? '✓ Wake sent'
+    : status === 'error'   ? '✗ Failed'
+    : 'Wake Up';
+
+  const bg = status === 'sent'  ? '#e8f5e9'
+    : status === 'error' ? '#ffeef0'
+    : '#fffbeb';
+
+  const color = status === 'sent'  ? '#2e7d32'
+    : status === 'error' ? '#c62828'
+    : '#b45309';
+
+  const border = status === 'sent'  ? '#a5d6a7'
+    : status === 'error' ? '#ffcdd2'
+    : '#fde68a';
+
+  return (
+    <button onClick={handleWake} disabled={status === 'sending'}
+      style={{ marginTop: 5, display: 'inline-flex', alignItems: 'center', gap: 4, background: bg, border: `1px solid ${border}`, color, borderRadius: 5, padding: '3px 9px', fontSize: 10, fontWeight: 700, cursor: status === 'sending' ? 'wait' : 'pointer', transition: 'all 0.2s' }}>
+      {status === 'idle' || status === 'sending' ? (
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/>
+        </svg>
+      ) : null}
+      {label}
+    </button>
+  );
+};
+
 const LiveStreaming: FC = () => {
   const [allDevices, setAllDevices] = useState<IotDevice[]>([]);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -701,7 +745,7 @@ const LiveStreaming: FC = () => {
             <div style={{ display: 'flex', gap: 6 }}>
               {(['All', 'Online', 'Offline'] as const).map(f => (
                 <button key={f} onClick={() => setViewFilter(f)}
-                  style={{ background: viewFilter === f ? T.pink : '#fff', color: viewFilter === f ? '#fff' : T.textSecondary, border: `1px solid ${viewFilter === f ? T.pink : T.border}`, borderRadius: 6, padding: '5px 16px', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+                  style={{ background: viewFilter === f ? T.purple : '#fff', color: viewFilter === f ? '#fff' : T.textSecondary, border: `1px solid ${viewFilter === f ? T.purple : T.border}`, borderRadius: 6, padding: '5px 16px', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
                   {f}
                 </button>
               ))}
@@ -759,7 +803,7 @@ const LiveStreaming: FC = () => {
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
                             <span style={{ color: T.textPrimary, fontWeight: 600, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{device.deviceName}</span>
-                            <span style={{ background: T.blueBg, color: T.blue, fontSize: 9, borderRadius: 3, padding: '1px 5px', fontWeight: 700, flexShrink: 0 }}>{isDashcam(device) ? 'Dashcam' : device.deviceType || 'Device'}</span>
+                            <span style={{ background: '#fff0f5', color: '#f00d69', fontSize: 9, borderRadius: 3, padding: '1px 5px', fontWeight: 700, flexShrink: 0 }}>{isDashcam(device) ? 'Dashcam' : device.deviceType || 'Device'}</span>
                           </div>
                           <div style={{ color: T.textMuted, fontSize: 10, fontFamily: 'monospace' }}>{device.imei}</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
@@ -768,6 +812,10 @@ const LiveStreaming: FC = () => {
                             {isStarting && <span style={{ color: T.textMuted, fontSize: 10 }}>· {streamProgress}</span>}
                             {!isStarting && <span style={{ color: T.textMuted, fontSize: 10 }}>· {device.model}</span>}
                           </div>
+                          {/* Wake Up button — shown when offline */}
+                          {!isOnline && (
+                            <WakeButton imei={device.imei} />
+                          )}
                         </div>
                       </div>
                     </div>
