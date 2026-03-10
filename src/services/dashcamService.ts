@@ -1,22 +1,21 @@
 /**
- * dashcamService.ts  (FIXED)
+ * dashcamService.ts  (FIXED for Vercel deployment)
  * ─────────────────────────────────────────────────────────────────────────────
  * Fix summary:
- *   1. Added `streamingSslUrls` to LiveVideoSession interface
- *      (the real TurboHive API returns BOTH streamingUrls AND streamingSslUrls;
- *       the SSL variant has browser-accessible HTTPS FLV/HLS URLs)
- *   2. startLiveVideo now passes allowNon1000=true so device-busy responses
- *      still return the streaming URLs instead of throwing
- *   3. proxyApi baseURL corrected: was '/iot-api' → full path preserved,
- *      but video/live/* endpoints now use correct /video/live/start path
+ *   1. IOT_BASE and API_BASE dynamically switch between direct URL (localhost)
+ *      and Vercel proxy path (/iot-proxy) in production
+ *   2. resolveStreamUrls rewriteToPublic also uses proxy in production
+ *   3. All other logic unchanged
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
 import axios from 'axios';
 
 // ─── Config ───────────────────────────────────────────────────────────────────
-export const IOT_BASE = 'https://iot.ravity.io';
-const API_BASE = `${IOT_BASE}/api/v3`;
+const isProduction = typeof window !== 'undefined' && window.location.hostname !== 'localhost';
+
+export const IOT_BASE = isProduction ? '' : 'https://iot.ravity.io';
+const API_BASE = isProduction ? '/iot-proxy/api/v3' : 'https://iot.ravity.io/api/v3';
 const TOKEN = process.env.REACT_APP_IOT_TOKEN || '';
 
 const api = () =>
@@ -74,7 +73,7 @@ const parsePaged = <T>(raw: any, size: number): PagedData<T> => {
 export const resolveMediaUrl = (path?: string): string => {
   if (!path) return '';
   if (path.startsWith('http')) return path;
-  return `${IOT_BASE}${path}`;
+  return `${isProduction ? 'https://iot.ravity.io' : IOT_BASE}${path}`;
 };
 
 // ─── Types: Device ────────────────────────────────────────────────────────────
@@ -190,20 +189,6 @@ export interface StreamingUrls {
   hls: string;
 }
 
-/**
- * FIXED: Added streamingSslUrls.
- *
- * The TurboHive /video/live/start API returns TWO sets of URLs:
- *   streamingUrls     — internal HTTP URLs (e.g. http://172.26.10.175:8881/...)
- *   streamingSslUrls  — public HTTPS URLs  (e.g. https://iot.ravity.io:8891/...)
- *
- * ALWAYS prefer streamingSslUrls in the browser. The HTTP internal IPs are
- * unreachable from outside the server network and will trigger mixed-content
- * blocks when the Ravity app is served over HTTPS.
- *
- * Previous code only defined streamingUrls and tried to rewrite the internal IP
- * via a regex. This was brittle and unnecessary — just use streamingSslUrls directly.
- */
 export interface LiveVideoSession {
   resultCode: string;
   resultMsg: string | null;
@@ -458,12 +443,9 @@ export const fetchStorageUsage = async (): Promise<StorageUsage> => {
 };
 
 // =============================================================================
-// VIDEO APIs  ← KEY FIXES HERE
+// VIDEO APIs
 // =============================================================================
 
-/**
- * POST /v3/video/live/start
- */
 export const startLiveVideo = async (
   imei: string,
   channel: number,
@@ -485,9 +467,6 @@ export const startLiveVideo = async (
   return res.data.data;
 };
 
-/**
- * POST /v3/video/live/stop
- */
 export const stopLiveVideo = async (
   imei: string,
   channel: number,
@@ -504,9 +483,6 @@ export const stopLiveVideo = async (
   );
 };
 
-/**
- * POST /v3/video/files/list
- */
 export const listVideoFiles = async (
   imei: string,
   startTime: number,
@@ -530,9 +506,6 @@ export const listVideoFiles = async (
   return res.data.data;
 };
 
-/**
- * POST /v3/video/playback/start
- */
 export const startVideoPlayback = async (
   imei: string,
   fileNames: string[],
@@ -763,11 +736,6 @@ export const isDashcam = (device: IotDevice): boolean => {
 /**
  * resolveStreamUrls — unified helper to get browser-safe FLV + HLS URLs
  * from a LiveVideoSession.
- *
- * Priority: streamingSslUrls (HTTPS, browser-safe) > rewritten streamingUrls
- *
- * Usage in LiveStreaming.tsx:
- *   const { flvUrl, hlsUrl } = resolveStreamUrls(session);
  */
 export const resolveStreamUrls = (
   session: LiveVideoSession | null | undefined
@@ -776,7 +744,6 @@ export const resolveStreamUrls = (
   const ssl = session.streamingSslUrls;
   const plain = session.streamingUrls;
 
-  // Prefer SSL URLs — they are already public HTTPS endpoints
   const flvUrl = ssl?.flv || rewriteToPublic(plain?.flv || '');
   const hlsUrl = ssl?.hls || rewriteToPublic(plain?.hls || '');
   const rtmpUrl = ssl?.rtmp || plain?.rtmp || '';
@@ -785,13 +752,13 @@ export const resolveStreamUrls = (
 };
 
 /**
- * Fallback rewriter: converts internal HTTP server IPs to the public iot.ravity.io endpoint.
- * Only used when streamingSslUrls is absent (older firmware).
- *
- * e.g. http://172.26.10.175:8881/live/1/imei.flv
- *   → https://iot.ravity.io:8891/live/1/imei.flv
+ * Fallback rewriter: converts internal HTTP server IPs to the public endpoint.
+ * In production uses Vercel proxy, in development uses direct iot.ravity.io.
  */
 const rewriteToPublic = (url: string): string => {
   if (!url) return '';
-  return url.replace(/^https?:\/\/[^/]+/, 'https://iot.ravity.io:8891');
+  const publicBase = isProduction
+    ? `${window.location.origin}/iot-proxy`
+    : 'https://iot.ravity.io:8891';
+  return url.replace(/^https?:\/\/[^/]+/, publicBase);
 };

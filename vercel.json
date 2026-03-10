@@ -13,6 +13,10 @@
     {
       "source": "/ingestion-proxy/:path*",
       "destination": "https://platform.ravity.io/:path*"
+    },
+    {
+      "source": "/iot-proxy/:path*",
+      "destination": "https://iot.ravity.io/:path*"
     }
   ]
 }
