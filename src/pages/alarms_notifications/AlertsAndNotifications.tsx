@@ -527,7 +527,7 @@ const AlertsTab: FC<{ onSelectAlert: (a: IotAlert) => void }> = ({ onSelectAlert
 										style={{ background:'#eff6ff', border:`1px solid #bfdbfe`, borderRadius:7, padding:'5px 8px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
 										<IconEye size={15} color='#3b82f6' />
 									</button>
-									<button title='Dismiss alert' onClick={() => setDismissed(d => new Set([...d, alert.id]))}
+									<button title='Dismiss alert' onClick={() => setDismissed(d => new Set(Array.from(d).concat(alert.id)))}
 										style={{ background:'#fffbeb', border:`1px solid #fde68a`, borderRadius:7, padding:'5px 8px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
 										<IconDismiss />
 									</button>
