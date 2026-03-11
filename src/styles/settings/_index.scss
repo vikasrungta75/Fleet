@@ -40,8 +40,8 @@ $grays: (
 	'900': $gray-900,
 );
 
-$primary: #6c5dd3; // Don't forget to make changes to the .env file as well.
-$secondary: #f00d69; // Don't forget to make changes to the .env file as well.
+$primary: #f00d69; // Don't forget to make changes to the .env file as well.
+$secondary: #1f1e1e; // Don't forget to make changes to the .env file as well.
 $success: #00d3cf; // Don't forget to make changes to the .env file as well.
 $info: #d7f6ff; // Don't forget to make changes to the .env file as well.
 $warning: #ffcf52; // Don't forget to make changes to the .env file as well.
@@ -636,8 +636,3 @@ $theme-colors: map.merge($theme-colors, $custom-colors);
 //	stylelint-enable no-invalid-position-at-import-rule
 
 // stylelint-enable annotation-no-unknown
-
-// ── [DES-01/DES-02] Centralised design tokens ───────────────────────────────
-// Defines $rv-* SCSS vars + :root CSS custom properties (--rv-*).
-// All pages use var(--rv-purple) etc. instead of hardcoded hex values.
-@import 'tokens';
