@@ -5,6 +5,7 @@ import PageWrapper from '../../layout/PageWrapper/PageWrapper';
 import Page from '../../layout/Page/Page';
 import SubHeader, { SubHeaderLeft } from '../../layout/SubHeader/SubHeader';
 import AlertDetailModal from './components/AlertDetailModal';
+import styles from './AlertsAndNotifications.module.scss';
 import {
 	fetchAlerts,
 	fetchResources,

@@ -2,6 +2,7 @@
 import React, { FC, useState, useMemo } from 'react';
 import PageWrapper from '../../layout/PageWrapper/PageWrapper';
 import Page from '../../layout/Page/Page';
+import styles from './AIFleetManager.module.scss';
 import SubHeader, { SubHeaderLeft, SubHeaderRight } from '../../layout/SubHeader/SubHeader';
 
 // ── AGENT DEFINITIONS ────────────────────────────────────────────────────────
