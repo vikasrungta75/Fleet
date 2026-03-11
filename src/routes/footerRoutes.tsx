@@ -13,7 +13,7 @@ const footers = [
 	{ path: dashboardMenu.setup.subMenu.vehicles.path, element: null, exact: true },
 	{ path: `${vehiclesPages.vehicleDetail.path}/:id`, element: null, exact: true },
 	{ path: dashboardMenu.fleet.path, element: null, exact: true },
-	{ path: dashboardMenu.alertsNotifications.path, element: null, exact: true },
+	{ path: dashboardMenu.alerts.path, element: null, exact: true }, // FIX DES-06: alertsNotifications removed, use alerts
 	{ path: `${historyPages.tripDetails.path}/:id`, element: null, exact: true },
 	{ path: '*', element: <Footer /> },
 ];

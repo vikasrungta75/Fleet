@@ -15,7 +15,7 @@ const AlertDetails = () => {
 			<Page>
 				<div className='d-flex pb-3 mb-4 border-bottom border-secondary w-100'>
 					{/* <GoBack
-						handleClick={() => navigate(`../${dashboardMenu.alertsNotifications.path}`)}
+						handleClick={() => navigate(`../${dashboardMenu.alerts.path}`) // FIX DES-06: use alerts key}
 					/> */}
 					<h1 className='fs-2 ms-4 fw-semibold text-secondary'>
 						{t(`${alertsNotificationsPages.alertsDetails.text}`)}
