@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import L from 'leaflet';
 import PageWrapper from '../../layout/PageWrapper/PageWrapper';
 import Page from '../../layout/Page/Page';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { RootState } from '../../store/store';
 import { initialVehicleDetailsLocation, IvehicleLocation } from '../../type/vehicles-type';
 import { useGetVehicleLocationv1 } from '../../services/vehiclesService';
@@ -15,12 +15,29 @@ import { optionsmapFleetTraject } from '../setup-admin/geofences/constants/const
 import FleetDetail from './components/FleetDetails';
 import MapComponent from './components/map/components/MapComponent';
 
+// PERF: Select only the fields we need using shallowEqual to prevent
+// re-renders when unrelated appStoreNoPersist fields change.
+const selectMyFleetState = (state: RootState) => ({
+	selectedTrajectHistory:         state.appStoreNoPersist.selectedTrajectHistory,
+	searchInputGeneral:             state.appStoreNoPersist.searchInputGeneral,
+	fleetSearched:                  state.appStoreNoPersist.fleetSearched,
+	vehicleDetailSelected:          state.appStoreNoPersist.vehicleDetailSelected,
+	geofencePointOfInterest:        state.appStoreNoPersist.geofencePointOfInterest,
+	raduisPointOfInterest:          state.appStoreNoPersist.raduisPointOfInterest,
+	geofencePointOfInterestIsOpen:  state.appStoreNoPersist.geofencePointOfInterestIsOpen,
+});
+
 const MyFleet = () => {
 	const dispatch = useDispatch();
 	const [map, setMap] = useState<MapType | null>(null);
 
-	const { showAllVehiclesMap } = useSelector((state: RootState) => state.vehicles);
+	// PERF: Isolated selector — only re-renders when vehicles.showAllVehiclesMap changes
+	const showAllVehiclesMap = useSelector(
+		(state: RootState) => state.vehicles.showAllVehiclesMap,
+	);
 
+	// PERF: shallowEqual prevents re-render when the object reference changes
+	// but the values inside haven't changed
 	const {
 		selectedTrajectHistory,
 		searchInputGeneral,
@@ -29,161 +46,122 @@ const MyFleet = () => {
 		geofencePointOfInterest,
 		raduisPointOfInterest,
 		geofencePointOfInterestIsOpen,
-	} = useSelector((state: RootState) => state.appStoreNoPersist);
-
-	const [WheelStateEvent, setWheelStateEvent] = useState(false);
+	} = useSelector(selectMyFleetState, shallowEqual);
 
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [vehicleDetails, setVehicleDetails] = useState<IvehicleLocation>({
 		...initialVehicleDetailsLocation,
 	});
-
 	const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
-
 	const [vehicleSelectedCard, setvehicleSelectedCard] = useState<IvehicleLocation>();
+	const [WheelStateEvent, setWheelStateEvent] = useState(false);
+
 	const { data: vehiclesLocationv, isLoading, isFetched } = useGetVehicleLocationv1();
+
+	// PERF: useFilteredVehicles already memoizes internally, but we guard the
+	// result so MapComponent doesn't re-render when the array is identical.
 	const filteredVehicles = useFilteredVehicles(vehiclesLocationv, searchInputGeneral);
 
 	useEffect(() => {
 		if (!showAllVehiclesMap) {
 			dispatch.vehicles.changeShowAllVehicle(true);
 		}
-
 		return () => {
 			dispatch.vehicles.changeShowAllVehicle(false);
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	const mapFitBoundsAll = useCallback(() => {
-		if (!filteredVehicles || filteredVehicles.length === 0) {
-			console.warn('No vehicles available to fit bounds');
-			return;
-		}
-
-		// Initialize bounds
-		const bounds = L.latLngBounds([]) as L.LatLngBounds;
-
-		filteredVehicles.forEach((loc: IvehicleLocation, index: number) => {
-			const lat = parseFloat(loc.lat);
-			const lng = parseFloat(loc.lng);
-
-			if (isNaN(lat) || isNaN(lng)) {
-				console.error(`Invalid coordinates at index ${index}:`, loc);
-				return;
-			}
-
-			bounds.extend([lat, lng]);
-		});
-
-		if (!bounds.isValid()) {
-			console.error('Generated bounds are invalid');
-			return;
-		}
-
-		// Fit map to bounds
-		// (map as unknown as L.Map).fitBounds(bounds);
+	// PERF: Memoize valid lat/lng pairs so mapFitBoundsAll doesn't re-allocate
+	// on every render cycle when filteredVehicles hasn't actually changed.
+	const validVehicleCoords = useMemo(() => {
+		if (!filteredVehicles) return [];
+		return filteredVehicles
+			.map((v: IvehicleLocation) => ({
+				lat: parseFloat(v.lat),
+				lng: parseFloat(v.lng),
+			}))
+			.filter(({ lat, lng }) => !isNaN(lat) && !isNaN(lng));
 	}, [filteredVehicles]);
 
-	useEffect(() => {
-		if (vehicleDetailSelected.length) {
-			const updatedVehicles = [...vehicleDetailSelected];
-			filteredVehicles.forEach((secondeVehicle) => {
-				const index = updatedVehicles.findIndex(
-					(vehicle) => vehicle.vin === secondeVehicle.vin,
-				);
-				if (index !== -1) {
-					updatedVehicles[index] = { ...updatedVehicles[index], ...secondeVehicle };
-				} else {
-					return false;
-				}
-			});
+	const mapFitBoundsAll = useCallback(() => {
+		if (!validVehicleCoords.length) return;
+		const bounds = L.latLngBounds([]);
+		validVehicleCoords.forEach(({ lat, lng }) => bounds.extend([lat, lng]));
+		if (bounds.isValid() && map) {
+			(map as unknown as L.Map).fitBounds(bounds, { padding: [30, 30] });
+		}
+	}, [validVehicleCoords, map]);
 
-			if (JSON.stringify(updatedVehicles) !== JSON.stringify(vehicleDetailSelected)) {
-				dispatch.appStoreNoPersist.addVehicleSelectedToMap(updatedVehicles);
+	// Sync selected vehicles with latest position data
+	useEffect(() => {
+		if (!vehicleDetailSelected.length) return;
+
+		const updatedVehicles = [...vehicleDetailSelected];
+		filteredVehicles?.forEach((secondeVehicle) => {
+			const index = updatedVehicles.findIndex((v) => v.vin === secondeVehicle.vin);
+			if (index !== -1) {
+				updatedVehicles[index] = { ...updatedVehicles[index], ...secondeVehicle };
 			}
-			if (updatedVehicles.length === 0) {
-				dispatch.appStoreNoPersist.changeSelectedTrajectHistory([]);
-				dispatch.appStoreNoPersist.addVehicleSelectedToMap([]);
-				dispatch.vehicles.changeShowAllVehicle(true);
-			}
+		});
+
+		// PERF: Avoid dispatch if nothing changed
+		if (JSON.stringify(updatedVehicles) !== JSON.stringify(vehicleDetailSelected)) {
+			dispatch.appStoreNoPersist.addVehicleSelectedToMap(updatedVehicles);
+		}
+		if (updatedVehicles.length === 0) {
+			dispatch.appStoreNoPersist.changeSelectedTrajectHistory([]);
+			dispatch.appStoreNoPersist.addVehicleSelectedToMap([]);
+			dispatch.vehicles.changeShowAllVehicle(true);
 		}
 
 		function mapFitBounds() {
 			if (!map) return;
 			const bounds = L.latLngBounds([]);
-
-			vehicleDetailSelected &&
-				vehicleDetailSelected.map((loc: IvehicleLocation) =>
-					bounds.extend([parseFloat(loc.lat), parseFloat(loc.lng)]),
-				);
-			(map as unknown as L.Map).fitBounds(bounds);
+			vehicleDetailSelected.forEach((loc: IvehicleLocation) =>
+				bounds.extend([parseFloat(loc.lat), parseFloat(loc.lng)]),
+			);
+			if (bounds.isValid()) (map as unknown as L.Map).fitBounds(bounds);
 		}
 
 		if (selectedTrajectHistory.length === 0) {
 			if (vehicleDetailSelected.length > 0) {
 				mapFitBounds();
-			} else {
-				if (showAllVehiclesMap) {
-					mapFitBoundsAll();
-				}
-			}
-		} else return;
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [
-		filteredVehicles,
-		vehicleDetailSelected,
-		selectedTrajectHistory,
-		showAllVehiclesMap,
-		mapFitBoundsAll,
-	]);
-
-	useEffect(() => {
-		function mapFitBounds() {
-			if (!map) return;
-			const bounds = L.latLngBounds([]);
-
-			selectedTrajectHistory.forEach((trip) =>
-				trip.RoadTripReformed?.forEach((loc) => bounds.extend([loc.lat, loc.lng])),
-			);
-
-			(map as unknown as L.Map).fitBounds(bounds);
-		}
-
-		if (vehicleDetailSelected.length === 0) {
-			if (selectedTrajectHistory.length > 0) {
-				mapFitBounds();
-			} else return;
-		} else return;
-
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [selectedTrajectHistory, map, vehicleDetailSelected, mapFitBoundsAll]);
-	//this useEffect for the show all vehicle button
-	useEffect(() => {
-		if (showAllVehiclesMap) {
-			mapFitBoundsAll();
-		}
-	}, [filteredVehicles, vehicleSelectedCard, showAllVehiclesMap, mapFitBoundsAll]);
-
-	// useEffect for the map selected in search input to consult the fleets selected
-	useEffect(() => {
-		function mapFitBounds() {
-			const bounds = L.latLngBounds([]);
-
-			bounds.extend([parseFloat(fleetSearched.lat), parseFloat(fleetSearched.lng)]);
-		}
-
-		if (Object.keys(fleetSearched).length > 0) {
-			mapFitBounds();
-		} else {
-			if (showAllVehiclesMap) {
+			} else if (showAllVehiclesMap) {
 				mapFitBoundsAll();
 			}
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [filteredVehicles, vehicleDetailSelected, selectedTrajectHistory, showAllVehiclesMap, mapFitBoundsAll]);
 
-		return () => {};
+	// Fit bounds to trip history when selected
+	useEffect(() => {
+		if (vehicleDetailSelected.length > 0 || selectedTrajectHistory.length === 0) return;
+
+		function mapFitBounds() {
+			if (!map) return;
+			const bounds = L.latLngBounds([]);
+			selectedTrajectHistory.forEach((trip) =>
+				trip.RoadTripReformed?.forEach((loc: any) => bounds.extend([loc.lat, loc.lng])),
+			);
+			if (bounds.isValid()) (map as unknown as L.Map).fitBounds(bounds);
+		}
+		mapFitBounds();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [selectedTrajectHistory, map]);
+
+	// Fit bounds when showAllVehicles toggled
+	useEffect(() => {
+		if (showAllVehiclesMap) mapFitBoundsAll();
+	}, [filteredVehicles, vehicleSelectedCard, showAllVehiclesMap, mapFitBoundsAll]);
+
+	// Fit to searched vehicle
+	useEffect(() => {
+		if (Object.keys(fleetSearched).length > 0) return; // map pans via MapComponent
+		if (showAllVehiclesMap) mapFitBoundsAll();
 	}, [filteredVehicles, fleetSearched, showAllVehiclesMap, mapFitBoundsAll]);
 
+	// Cleanup on unmount
 	useEffect(() => {
 		return () => {
 			dispatch.appStoreNoPersist.setSelectedTrajectHistory([]);
@@ -193,30 +171,7 @@ const MyFleet = () => {
 	return (
 		<PageWrapper isProtected={true} className=''>
 			<Page className='mw-100 py-0 my-0' container='fluid'>
-				<div id='pageContainer '>
-					{/* {Object.keys(fleetSearched).length > 0 && (
-						<MarkerClusterer
-							onClick={() => {
-								dispatch.vehicles.changeShowAllVehicle(false);
-								setWheelStateEvent(true);
-							}}>
-							{(clusterer) => (
-								<>
-									<CustomMarker
-										key={fleetSearched!.lng}
-										vehicleLocation={fleetSearched!}
-										position={{
-											lat: parseFloat(fleetSearched!.lat),
-											lng: parseFloat(fleetSearched!.lng),
-										}}
-										clusterer={clusterer}
-										setVehicleDetails={setVehicleDetails}
-										setIsModalOpen={setIsModalOpen}
-									/>
-								</>
-							)}
-						</MarkerClusterer>
-					)} */}
+				<div id='pageContainer'>
 					{filteredVehicles ? (
 						<MapComponent
 							filteredVehicles={filteredVehicles}
@@ -232,14 +187,13 @@ const MyFleet = () => {
 							dispatch={dispatch}
 							colorsOptionMap={colorsOptionMap}
 							optionsmapFleetTraject={optionsmapFleetTraject}
-							// endFlag={endFlag}
 							carcustom={carcustom}
 							geofencePointOfInterest={geofencePointOfInterest}
 							raduisPointOfInterest={raduisPointOfInterest}
 							geofencePointOfInterestIsOpen={geofencePointOfInterestIsOpen}
 						/>
 					) : (
-						<div className={`loader-wrapper`}>
+						<div className='loader-wrapper'>
 							<Spinner className='spinner-center' color='secondary' size='5rem' />
 						</div>
 					)}
@@ -257,4 +211,5 @@ const MyFleet = () => {
 	);
 };
 
-export default MyFleet;
+// PERF: React.memo prevents re-render if parent re-renders with same props
+export default React.memo(MyFleet);

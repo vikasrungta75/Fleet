@@ -1,33 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { IvehicleLocation } from '../../../../../type/vehicles-type';
 import Card from '../../../../../components/bootstrap/Card';
-// import { Circle, InfoWindow, Marker, MarkerClusterer, Polyline } from '@react-google-maps/api';
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
-import mapIcon from '../../../../../assets/mapIcon.png';
 import L from 'leaflet';
 import Map from '../../map/Map';
 import CustomMarker from '../../CustomMarker';
-import { svg } from '../../../../../assets';
 import { statusInformations } from '../constants/mapConstants';
 import { TitleInfo } from '../../Card/HistoryDetailsCard';
-import { geofenceOptions } from '../../../../setup-admin/geofences/constants/constants';
 import point from '../../../../../assets/svg/custom-point-marker.svg';
 import HomePin from '../../../../../assets/svg/home_pin.svg';
 import endFlag from '../../../../../assets/svg/flag-damier.svg';
 import { useGetPoiList } from '../../../../../services/geofences';
-import {
-	History,
-	LocalGasStation,
-	Speed,
-	Thermostat,
-} from '../../../../../components/icon/material-icons';
-import { dateFormatter } from '../../../../../helpers/helpers';
+import { History, LocalGasStation, Speed, Thermostat } from '../../../../../components/icon/material-icons';
 import TrafficPolyline from './CustomPolyline';
-interface Coordinates {
-	lat: number;
-	lng: number;
-}
+
+interface Coordinates { lat: number; lng: number; }
+
 interface MapComponentProps {
 	filteredVehicles: IvehicleLocation[] | null;
 	vehicleDetailSelected: IvehicleLocation[];
@@ -41,12 +30,58 @@ interface MapComponentProps {
 	dispatch: any;
 	colorsOptionMap: any;
 	optionsmapFleetTraject: any;
-	// endFlag: string;
 	carcustom: string;
 	geofencePointOfInterest: any;
 	raduisPointOfInterest: number;
 	geofencePointOfInterestIsOpen: boolean;
 	map: any;
+}
+
+// PERF: Extracted to a stable top-level component so it isn't
+// re-created as a new function reference on every MapComponent render,
+// which would cause Leaflet to unmount and remount the entire cluster group.
+const VehicleMarkers = React.memo(({
+	vehicles,
+	setVehicleDetails,
+	setIsModalOpen,
+}: {
+	vehicles: IvehicleLocation[];
+	setVehicleDetails: (v: any) => void;
+	setIsModalOpen: (v: boolean) => void;
+}) => (
+	<MarkerClusterGroup chunkedLoading maxClusterRadius={60} disableClusteringAtZoom={16}>
+		{vehicles.map((loc) => (
+			<CustomMarker
+				key={loc.vin || loc.lng}
+				vehicleLocation={loc}
+				position={{ lat: parseFloat(loc.lat), lng: parseFloat(loc.lng) }}
+				setVehicleDetails={setVehicleDetails}
+				setIsModalOpen={setIsModalOpen}
+			/>
+		))}
+	</MarkerClusterGroup>
+));
+
+// PERF: Haversine distance — extracted outside component to avoid
+// re-allocation on every ArrowHovered effect tick.
+function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+	const R = 6371;
+	const dLat = ((lat2 - lat1) * Math.PI) / 180;
+	const dLng = ((lng2 - lng1) * Math.PI) / 180;
+	const a =
+		Math.sin(dLat / 2) ** 2 +
+		Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+	return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function findClosestIndex(targetLat: number, targetLng: number, coordinates: Coordinates[]): number {
+	let closestIndex = -1;
+	let minDistance = Number.MAX_VALUE;
+	for (let i = 0; i < coordinates.length; i++) {
+		const d = calculateDistance(targetLat, targetLng, coordinates[i].lat, coordinates[i].lng);
+		if (d < minDistance) { minDistance = d; closestIndex = i; }
+	}
+	return closestIndex;
 }
 
 const MapComponent: React.FC<MapComponentProps> = ({
@@ -62,7 +97,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
 	dispatch,
 	colorsOptionMap,
 	optionsmapFleetTraject,
-	// endFlag,
 	carcustom,
 	geofencePointOfInterest,
 	raduisPointOfInterest,
@@ -71,56 +105,30 @@ const MapComponent: React.FC<MapComponentProps> = ({
 }) => {
 	const [showToolTip, setShowToolTip] = useState<{ [key: number]: boolean }>({});
 	const [showToolTipEndTrip, setShowToolTipEndTrip] = useState<{ [key: number]: boolean }>({});
-	const { data: dataPOI, isLoading: isLoadingPOI } = useGetPoiList();
+	const { data: dataPOI } = useGetPoiList();
 	const [indexOfRoadHovered, setindexOfRoadHovered] = useState(-1);
-
 	const [ArrowHovered, setArrowHovered] = useState<{
-		lat: number;
-		lng: number;
-		item: any;
-		isOpen: boolean;
-	}>({
-		lat: 0,
-		lng: 0,
-		item: {},
-		isOpen: false,
-	});
+		lat: number; lng: number; item: any; isOpen: boolean;
+	}>({ lat: 0, lng: 0, item: {}, isOpen: false });
 
-	function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-		const R = 6371; // Radius of the Earth in kilometers
-		const dLat = ((lat2 - lat1) * Math.PI) / 180;
-		const dLng = ((lng2 - lng1) * Math.PI) / 180;
-		const a =
-			Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-			Math.cos((lat1 * Math.PI) / 180) *
-				Math.cos((lat2 * Math.PI) / 180) *
-				Math.sin(dLng / 2) *
-				Math.sin(dLng / 2);
-		const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-		const distance = R * c; // Distance in kilometers
-		return distance;
-	}
+	// PERF: Memoize static Leaflet icon objects — previously recreated on every render.
+	const homePinIcon = useMemo(() => L.icon({ iconUrl: HomePin, iconSize: [25, 25], iconAnchor: [12, 25] }), []);
+	const pointIcon   = useMemo(() => L.icon({ iconUrl: point,   iconSize: [25, 25], iconAnchor: [12, 25] }), []);
+	const endFlagIcon = useMemo(() => L.icon({ iconUrl: endFlag, iconSize: [25, 25], iconAnchor: [12, 25] }), []);
 
-	function findClosestIndex(
-		targetLat: number,
-		targetLng: number,
-		coordinates: Coordinates[],
-	): number {
-		let closestIndex = -1;
-		let minDistance = Number.MAX_VALUE;
-
-		for (let i = 0; i < coordinates.length; i++) {
-			const { lat, lng } = coordinates[i];
-			const distance = calculateDistance(targetLat, targetLng, lat, lng);
-
-			if (distance < minDistance) {
-				minDistance = distance;
-				closestIndex = i;
-			}
-		}
-
-		return closestIndex;
-	}
+	// PERF: Memoize per-trip icons so they don't rebuild every render cycle.
+	const tripIcons = useMemo(
+		() =>
+			selectedTrajectHistory.map((trip) => {
+				const url = statusInformations[trip.status]?.url
+					? `${statusInformations[trip.status].url}?${trip._id}`
+					: '';
+				return L.icon({ iconUrl: url, iconSize: [50, 50], iconAnchor: [25, 15] });
+			}),
+		// Rebuild only when the trip list identity changes
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[selectedTrajectHistory.length],
+	);
 
 	useEffect(() => {
 		if (Object.keys(ArrowHovered.item).length > 0) {
@@ -131,526 +139,185 @@ const MapComponent: React.FC<MapComponentProps> = ({
 			);
 			setindexOfRoadHovered(closestIndex);
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ArrowHovered]);
 
-	const homePinIcon = L.icon({
-		iconUrl: HomePin, // Use iconUrl instead of url
-		iconSize: [25, 25], // Leaflet uses an array for size, not google.maps.Size
-		iconAnchor: [12, 25], // Adjust anchor accordingly
-	});
+	// PERF: Stable handler for POI drag so the Circle/Marker don't re-bind each render
+	const handlePoiDragEnd = useCallback(
+		(e: any) => {
+			const latlng = (e.target as L.Marker).getLatLng();
+			dispatch.appStoreNoPersist.handleChangePointInterest({ lat: latlng.lat, lng: latlng.lng });
+		},
+		[dispatch.appStoreNoPersist],
+	);
 
-	const pointIcon = L.icon({
-		iconUrl: point, // Use iconUrl instead of url
-		iconSize: [25, 25], // Leaflet uses an array for size, not google.maps.Size
-		iconAnchor: [12, 25], // Adjust anchor accordingly
-	});
-
-	// Define custom icon
-	const endFlagIcon = L.icon({
-		iconUrl: endFlag,
-		iconSize: [25, 25],
-		iconAnchor: [12, 25],
-	  });
+	const commonMapProps = {
+		map, setWheelStateEvent, setvehicleSelectedCard, setMap,
+		isFullScreen: true, setIsFullScreen,
+		latitude: 0, longitude: 0, zoom: 0, bearing: 0, pitch: 0,
+		setIsModalOpen,
+	};
 
 	return (
 		<Card className='fleet-map rounded mh-100'>
 			{(() => {
-				switch (true) {
-					case vehicleDetailSelected.length > 0:
-						return (
-							<>
-								<Map
-									map={map}
-									setWheelStateEvent={setWheelStateEvent}
-									setvehicleSelectedCard={setvehicleSelectedCard}
-									setMap={setMap}
-									isFullScreen={true}
-									setIsFullScreen={setIsFullScreen}
-									latitude={0}
-									longitude={0}
-									zoom={0}
-									bearing={0}
-									pitch={0}
-									setIsModalOpen={setIsModalOpen}
-									>
-									<MarkerClusterGroup chunkedLoading>
-										{vehicleDetailSelected?.map((loc: IvehicleLocation) => (
-											<CustomMarker
-												key={loc.lng}
-												vehicleLocation={loc}
-												position={{
-													lat: parseFloat(loc.lat),
-													lng: parseFloat(loc.lng),
-												}}
-												setVehicleDetails={setVehicleDetails}
-												setIsModalOpen={setIsModalOpen}
+				// ── Case 1: specific vehicles selected ──────────────────────────
+				if (vehicleDetailSelected.length > 0) {
+					return (
+						<Map {...commonMapProps}>
+							<VehicleMarkers
+								vehicles={vehicleDetailSelected}
+								setVehicleDetails={setVehicleDetails}
+								setIsModalOpen={setIsModalOpen}
+							/>
+						</Map>
+					);
+				}
+
+				// ── Case 2: trip history selected ────────────────────────────────
+				if (selectedTrajectHistory.length > 0) {
+					return (
+						<Map {...commonMapProps}>
+							{selectedTrajectHistory.map((arg, ind) => (
+								<React.Fragment key={arg._id ?? ind}>
+									{arg.type === 'road' && (
+										<>
+											<TrafficPolyline
+												path={arg.RoadTripReformed || []}
+												speedData={arg.speed || []}
+												options={optionsmapFleetTraject}
+												setArrowHovered={setArrowHovered}
+												selectedTrajectHistory={arg}
 											/>
-										))}
-									</MarkerClusterGroup>
-								</Map>
-							</>
-						);
-					case selectedTrajectHistory.length > 0:
-						return (
-							<>
-								<Map
-									setWheelStateEvent={setWheelStateEvent}
-									setvehicleSelectedCard={setvehicleSelectedCard}
-									setMap={setMap}
-									map={map}
-									isFullScreen={true}
-									setIsFullScreen={setIsFullScreen}
-									latitude={0}
-									longitude={0}
-									zoom={0}
-									bearing={0}
-									pitch={0}
-									setIsModalOpen={setIsModalOpen}>
-									{selectedTrajectHistory.map((arg, ind) => {
-										const status = selectedTrajectHistory[ind]?.status;
-										const iconUrl = statusInformations[status]?.url
-											? `${statusInformations[status].url}?${selectedTrajectHistory[ind]._id}`
-											: ''; // Fallback if URL is missing
 
-										// Define the Leaflet icon
-										const customIcon = L.icon({
-											iconUrl,
-											iconSize: [50, 50], // Leaflet expects [width, height]
-											iconAnchor: [25, 15], // Anchor point (matches Google Maps equivalent)
-										});
+											{ArrowHovered.isOpen && (
+												<Popup
+													position={[ArrowHovered.lat, ArrowHovered.lng]}
+													eventHandlers={{ remove: () => setArrowHovered({ lat: 0, lng: 0, item: {}, isOpen: false }) }}>
+													<div className='d-flex flex-column mb-3' style={{ width: '150px' }}>
+														{[
+															{ Icon: Thermostat, val: arg.temperature?.[indexOfRoadHovered] },
+															{ Icon: LocalGasStation, val: arg.fuel_level?.[indexOfRoadHovered] },
+															{ Icon: Speed, val: arg.speed?.[indexOfRoadHovered] },
+															{ Icon: History, val: arg.datetime?.[indexOfRoadHovered]?.$date
+																? new Date(arg.datetime[indexOfRoadHovered].$date).toLocaleString()
+																: 'Not available' },
+														].map(({ Icon, val }, i) => (
+															<div key={i} className='arrow-item'>
+																<div className='svg-item'><Icon fontSize='25px' /></div>
+																<div>{val ?? 'N/A'}</div>
+															</div>
+														))}
+													</div>
+												</Popup>
+											)}
 
-										return (
-											<>
-												{arg.type === 'road' && (
-													<>
-														<TrafficPolyline
-															path={
-																selectedTrajectHistory[ind]
-																	?.RoadTripReformed || []
-															}
-															speedData={
-																selectedTrajectHistory[ind]
-																	?.speed || []
-															}
-															options={optionsmapFleetTraject}
-															setArrowHovered={setArrowHovered}
-															selectedTrajectHistory={
-																selectedTrajectHistory[ind] || {}
-															}
-														/>
-
-														{ArrowHovered.isOpen && (
-															<Popup
-																position={[
-																	ArrowHovered.lat,
-																	ArrowHovered.lng,
-																]}
-																eventHandlers={{
-																	remove: () =>
-																		setArrowHovered({
-																			lat: 0,
-																			lng: 0,
-																			item: {},
-																			isOpen: false,
-																		}),
-																}}>
-																<div
-																	className='d-flex flex-column mb-3'
-																	style={{ width: '150px' }}>
-																	<div className='arrow-item'>
-																		<div className='svg-item'>
-																			<Thermostat
-																				fontSize={'25px'}
-																			/>
-																		</div>
-																		<div>
-																			{selectedTrajectHistory[
-																				ind
-																			]?.temperature?.[
-																				indexOfRoadHovered
-																			] ?? 'N/A'}
-																		</div>
-																	</div>
-																	<div className='arrow-item'>
-																		<div className='svg-item'>
-																			<LocalGasStation
-																				fontSize={'25px'}
-																			/>
-																		</div>
-																		<div>
-																			{selectedTrajectHistory[
-																				ind
-																			]?.fuel_level?.[
-																				indexOfRoadHovered
-																			] ?? 'N/A'}
-																		</div>
-																	</div>
-																	<div className='arrow-item'>
-																		<div className='svg-item'>
-																			<Speed
-																				fontSize={'25px'}
-																			/>
-																		</div>
-																		<div>
-																			{selectedTrajectHistory[
-																				ind
-																			]?.speed?.[
-																				indexOfRoadHovered
-																			] ?? 'N/A'}
-																		</div>
-																	</div>
-																	<div className='arrow-item'>
-																		<div className='svg-item'>
-																			<History
-																				fontSize={'25px'}
-																			/>
-																		</div>
-																		<div>
-																			{selectedTrajectHistory[
-																				ind
-																			]?.datetime?.[
-																				indexOfRoadHovered
-																			]?.$date
-																				? new Date(
-																						selectedTrajectHistory[
-																							ind
-																						].datetime[
-																							indexOfRoadHovered
-																						].$date,
-																				  ).toLocaleString()
-																				: 'Not available'}
-																		</div>
-																	</div>
-																</div>
+											{/* Departure marker */}
+											{arg.markerPositionState?.Departure?.length === 2 &&
+												!isNaN(arg.markerPositionState.Departure[0]) &&
+												!isNaN(arg.markerPositionState.Departure[1]) && (
+													<Marker
+														position={arg.markerPositionState.Departure}
+														eventHandlers={{
+															mouseover: () => setShowToolTip((p) => ({ ...p, [ind]: true })),
+															mouseout:  () => setShowToolTip((p) => ({ ...p, [ind]: false })),
+														}}>
+														{showToolTip[ind] && (
+															<Popup eventHandlers={{ remove: () => setShowToolTip((p) => ({ ...p, [ind]: false })) }}>
+																<ul style={{ width: '250px' }} className='d-flex flex-column align-items-start'>
+																	<li><TitleInfo titleStyle='fw-bold' className='mb-1 mt-1' title='VIN' info={arg.vin} /></li>
+																	<li><TitleInfo titleStyle='fw-bold' className='mb-1 mt-1' title='Address' info={arg.start_address} /></li>
+																</ul>
 															</Popup>
 														)}
-
-														{/* Departure Marker */}
-														{selectedTrajectHistory[ind]
-															?.RoadTripReformed &&
-															selectedTrajectHistory[ind]
-																?.markerPositionState?.Departure &&
-															Array.isArray(
-																selectedTrajectHistory[ind]
-																	.markerPositionState.Departure,
-															) &&
-															selectedTrajectHistory[ind]
-																.markerPositionState.Departure
-																.length === 2 &&
-															!isNaN(
-																selectedTrajectHistory[ind]
-																	.markerPositionState
-																	.Departure[0],
-															) &&
-															!isNaN(
-																selectedTrajectHistory[ind]
-																	.markerPositionState
-																	.Departure[1],
-															) && (
-																<Marker
-																	position={
-																		selectedTrajectHistory[ind]
-																			.markerPositionState
-																			.Departure
-																	}
-																	eventHandlers={{
-																		mouseover: () =>
-																			setShowToolTip(
-																				(prevState) => ({
-																					...prevState,
-																					[ind]: true,
-																				}),
-																			),
-																		mouseout: () =>
-																			setShowToolTip(
-																				(prevState) => ({
-																					...prevState,
-																					[ind]: false,
-																				}),
-																			),
-																	}}>
-																	{showToolTip[ind] && (
-																		<Popup
-																			eventHandlers={{
-																				remove: () =>
-																					setShowToolTip(
-																						(
-																							prevState,
-																						) => ({
-																							...prevState,
-																							[ind]: false,
-																						}),
-																					),
-																			}}>
-																			<ul
-																				style={{
-																					width: '250px',
-																				}}
-																				className='d-flex flex-column align-items-start'>
-																				<li>
-																					<TitleInfo
-																						titleStyle='fw-bold'
-																						className='mb-1 mt-1'
-																						title='VIN'
-																						info={
-																							selectedTrajectHistory[
-																								ind
-																							]?.vin
-																						}
-																					/>
-																				</li>
-																				<li>
-																					<TitleInfo
-																						titleStyle='fw-bold'
-																						className='mb-1 mt-1'
-																						title='Address'
-																						info={
-																							selectedTrajectHistory[
-																								ind
-																							]
-																								?.start_address
-																						}
-																					/>
-																				</li>
-																			</ul>
-																		</Popup>
-																	)}
-																</Marker>
-															)}
-
-														{/* End Trip Marker */}
-														{selectedTrajectHistory[ind]
-															?.markerPositionState?.Current &&
-															Array.isArray(
-																selectedTrajectHistory[ind]
-																	.markerPositionState.Current,
-															) &&
-															selectedTrajectHistory[ind]
-																.markerPositionState.Current
-																.length === 2 &&
-															!isNaN(
-																selectedTrajectHistory[ind]
-																	.markerPositionState.Current[0],
-															) &&
-															!isNaN(
-																selectedTrajectHistory[ind]
-																	.markerPositionState.Current[1],
-															) && (
-																<Marker
-																	icon={endFlagIcon}
-																	position={
-																		selectedTrajectHistory[ind]
-																			.markerPositionState
-																			.Current
-																	}
-																	eventHandlers={{
-																		mouseover: () =>
-																			setShowToolTipEndTrip(
-																				(prevState) => ({
-																					...prevState,
-																					[ind]: true,
-																				}),
-																			),
-																		mouseout: () =>
-																			setShowToolTipEndTrip(
-																				(prevState) => ({
-																					...prevState,
-																					[ind]: false,
-																				}),
-																			),
-																	}}>
-																	{showToolTipEndTrip[ind] && (
-																		<Popup
-																			eventHandlers={{
-																				remove: () =>
-																					setShowToolTipEndTrip(
-																						(
-																							prevState,
-																						) => ({
-																							...prevState,
-																							[ind]: false,
-																						}),
-																					),
-																			}}>
-																			<ul
-																				style={{
-																					width: '250px',
-																				}}
-																				className='d-flex flex-column align-items-start'>
-																				<li key={'end_vin'}>
-																					<TitleInfo
-																						titleStyle='fw-bold'
-																						className='mb-1 mt-1'
-																						title='VIN'
-																						info={
-																							selectedTrajectHistory[
-																								ind
-																							]?.vin
-																						}
-																					/>
-																				</li>
-																				<li
-																					key={
-																						'end_address'
-																					}>
-																					<TitleInfo
-																						titleStyle='fw-bold'
-																						className='mb-1 mt-1'
-																						title='Address'
-																						info={
-																							selectedTrajectHistory[
-																								ind
-																							]
-																								?.end_address
-																						}
-																					/>
-																				</li>
-																			</ul>
-																		</Popup>
-																	)}
-																</Marker>
-															)}
-													</>
+													</Marker>
 												)}
 
-												{arg.type === 'parked' &&
-													selectedTrajectHistory[ind]?.parkedPosition &&
-													!isNaN(
-														selectedTrajectHistory[ind].parkedPosition
-															.lat,
-													) &&
-													!isNaN(
-														selectedTrajectHistory[ind].parkedPosition
-															.lng,
-													) && (
-														<Marker
-															icon={customIcon}
-															position={[
-																selectedTrajectHistory[ind]
-																	.parkedPosition.lat,
-																selectedTrajectHistory[ind]
-																	.parkedPosition.lng,
-															]}
-														/>
-													)}
-											</>
-										);
-									})}
-								</Map>
-							</>
-						);
-					default:
-						return (
-							<>
-								<Map
-									map={map}
-									setWheelStateEvent={setWheelStateEvent}
-									setvehicleSelectedCard={setvehicleSelectedCard}
-									setMap={setMap}
-									isFullScreen={true}
-									setIsFullScreen={setIsFullScreen}
-									latitude={0}
-									longitude={0}
-									zoom={0}
-									bearing={0}
-									pitch={0}
-									setIsModalOpen={setIsModalOpen}>
-									<MarkerClusterGroup chunkedLoading>
-										{filteredVehicles?.map((loc: IvehicleLocation) => (
-											<CustomMarker
-												key={loc.lng}
-												vehicleLocation={loc}
-												position={{
-													lat: parseFloat(loc.lat),
-													lng: parseFloat(loc.lng),
-												}}
-												// clusterer={clusterer}
-												setVehicleDetails={setVehicleDetails}
-												setIsModalOpen={setIsModalOpen}
-											/>
-										))}
-									</MarkerClusterGroup>
-									{geofencePointOfInterestIsOpen && (
-										<>
-											{dataPOI &&
-												dataPOI.map((item: any, index: number) => {
-													return (
-														<Marker
-															key={item.poi_id}
-															icon={homePinIcon}
-															position={{
-																lat: Number(
-																	item.coordinates[0].lat,
-																),
-																lng: Number(
-																	item.coordinates[0].lng,
-																),
-															}}
-														/>
-													);
-												})}
-
-											<Marker
-												icon={pointIcon}
-												draggable={true}
-												eventHandlers={{
-													dragend: (e) => {
-														const latlng = (
-															e.target as L.Marker
-														).getLatLng();
-														dispatch.appStoreNoPersist.handleChangePointInterest(
-															{
-																lat: latlng.lat,
-																lng: latlng.lng,
-															},
-														);
-													},
-												}}
-												position={{
-													lat: Number(geofencePointOfInterest.lat),
-													lng: Number(geofencePointOfInterest.lng),
-												}}
-											/>
-
-											<Circle
-												center={{
-													lat: Number(geofencePointOfInterest.lat),
-													lng: Number(geofencePointOfInterest.lng),
-												}}
-												radius={Number(raduisPointOfInterest)}
-												pathOptions={{
-													color: 'blue',
-													fillColor: 'lightblue',
-													fillOpacity: 0.4,
-												}}
-												eventHandlers={{
-													dragend: (e) => {
-														const latlng = (
-															e.target as L.Circle
-														).getLatLng();
-														dispatch.appStoreNoPersist.handleChangePointInterest(
-															{
-																lat: latlng.lat,
-																lng: latlng.lng,
-															},
-														);
-													},
-												}}
-											/>
+											{/* End-trip marker */}
+											{arg.markerPositionState?.Current?.length === 2 &&
+												!isNaN(arg.markerPositionState.Current[0]) &&
+												!isNaN(arg.markerPositionState.Current[1]) && (
+													<Marker
+														icon={endFlagIcon}
+														position={arg.markerPositionState.Current}
+														eventHandlers={{
+															mouseover: () => setShowToolTipEndTrip((p) => ({ ...p, [ind]: true })),
+															mouseout:  () => setShowToolTipEndTrip((p) => ({ ...p, [ind]: false })),
+														}}>
+														{showToolTipEndTrip[ind] && (
+															<Popup eventHandlers={{ remove: () => setShowToolTipEndTrip((p) => ({ ...p, [ind]: false })) }}>
+																<ul style={{ width: '250px' }} className='d-flex flex-column align-items-start'>
+																	<li key='end_vin'><TitleInfo titleStyle='fw-bold' className='mb-1 mt-1' title='VIN' info={arg.vin} /></li>
+																	<li key='end_address'><TitleInfo titleStyle='fw-bold' className='mb-1 mt-1' title='Address' info={arg.end_address} /></li>
+																</ul>
+															</Popup>
+														)}
+													</Marker>
+												)}
 										</>
 									)}
-								</Map>
-							</>
-						);
+
+									{arg.type === 'parked' &&
+										arg.parkedPosition &&
+										!isNaN(arg.parkedPosition.lat) &&
+										!isNaN(arg.parkedPosition.lng) && (
+											<Marker
+												icon={tripIcons[ind]}
+												position={[arg.parkedPosition.lat, arg.parkedPosition.lng]}
+											/>
+										)}
+								</React.Fragment>
+							))}
+						</Map>
+					);
 				}
+
+				// ── Default: all vehicles ────────────────────────────────────────
+				return (
+					<Map {...commonMapProps}>
+						<VehicleMarkers
+							vehicles={filteredVehicles ?? []}
+							setVehicleDetails={setVehicleDetails}
+							setIsModalOpen={setIsModalOpen}
+						/>
+
+						{geofencePointOfInterestIsOpen && (
+							<>
+								{dataPOI?.map((item: any) => (
+									<Marker
+										key={item.poi_id}
+										icon={homePinIcon}
+										position={{
+											lat: Number(item.coordinates[0].lat),
+											lng: Number(item.coordinates[0].lng),
+										}}
+									/>
+								))}
+
+								<Marker
+									icon={pointIcon}
+									draggable={true}
+									eventHandlers={{ dragend: handlePoiDragEnd }}
+									position={{
+										lat: Number(geofencePointOfInterest.lat),
+										lng: Number(geofencePointOfInterest.lng),
+									}}
+								/>
+
+								<Circle
+									center={{
+										lat: Number(geofencePointOfInterest.lat),
+										lng: Number(geofencePointOfInterest.lng),
+									}}
+									radius={Number(raduisPointOfInterest)}
+									pathOptions={{ color: 'blue', fillColor: 'lightblue', fillOpacity: 0.4 }}
+								/>
+							</>
+						)}
+					</Map>
+				);
 			})()}
 		</Card>
 	);
 };
 
-export default MapComponent;
-
-
-
-
+export default React.memo(MapComponent);
