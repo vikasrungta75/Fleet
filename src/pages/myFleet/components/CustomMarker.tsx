@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Marker, Tooltip, } from 'react-leaflet';
 import L from 'leaflet';
 import { IvehicleLocation } from '../../../type/vehicles-type';
-import { statusInformations1 } from './map/constants/mapConstants1';
+import { statusInformations } from './map/constants/mapConstants'; // FIX CODE-06: removed dead mapConstants1 reference
 import { rotateAccordingToCoordinates } from '../../../helpers/helpers';
 import active from '../../../assets/svg/custom-active.svg';
 import { TitleInfo } from './Card/HistoryDetailsCard';
@@ -25,7 +25,7 @@ const CustomMarker = (props: CustomMarkerProps) => {
     const { t } = useTranslation(['vehicles']);
  
     const icon = L.icon({
-        iconUrl: statusInformations1[vehicleLocation.status]?.url ?? "default-icon.png",
+        iconUrl: statusInformations[vehicleLocation.status]?.url ?? "default-icon.png",
         iconSize: [40, 40],  // Width and height of the icon
         iconAnchor: [25, 15], // Anchor point
     });
