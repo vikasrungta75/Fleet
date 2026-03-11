@@ -1,5 +1,5 @@
 import { CSSProperties } from 'react';
-import { svg } from '../../../../../assets/index1';
+import { svg } from '../../../../../assets/index'; // FIX CODE-06: was index1 (dead file)
 import { TColor } from '../../../../../type/color-type';
 
 export const ilStyle = {
