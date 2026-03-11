@@ -1,3 +1,14 @@
+// src/pages/auth/login/Login.tsx
+// ─────────────────────────────────────────────────────────────────────────────
+// CHANGES (DES-03 / A11Y-01):
+//   • Removed dark glassmorphism with #00c8ff blue accents
+//   • New theme: light/white card with purple primary (#6c5dd3) brand palette
+//   • Fixed focusedField key mismatch: was 'email', now 'loginUsername'
+//   • Removed eslint-disable jsx-a11y/label-has-associated-control comment;
+//     label → input association is now correct via htmlFor
+//   • All colors use --rv-* CSS custom properties from _tokens.scss
+// ─────────────────────────────────────────────────────────────────────────────
+
 import React, { FC, useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
@@ -6,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { authPages } from '../../../menu';
 import AuthContext from '../../../contexts/authContext';
 import { store } from '../../../store/store';
+import styles from './Login.module.scss';
 
 export interface LocationStateInterface {
 	from: string;
@@ -17,6 +29,10 @@ const Login: FC = () => {
 	const dispatch = useDispatch<any>();
 	const navigate = useNavigate();
 	const { t } = useTranslation(['authPage']);
+
+	// ── [FIX A11Y-01] Field names now match the formik field ids exactly ────────
+	// Previously: setFocusedField('email') — but htmlFor was 'loginUsername'
+	// Now: field keys match the formik initialValues keys
 	const [focusedField, setFocusedField] = useState<string | null>(null);
 
 	const formik = useFormik({
@@ -55,61 +71,101 @@ const Login: FC = () => {
 		},
 	});
 
-	const inputStyle = (field: string): React.CSSProperties => ({
-		width: '100%',
-		padding: '13px 16px',
-		background: 'rgba(255,255,255,0.07)',
-		border: `1px solid ${focusedField === field ? 'rgba(0,200,255,0.8)' : 'rgba(0,200,255,0.3)'}`,
-		borderRadius: 10,
-		color: '#fff',
-		fontSize: 14,
-		outline: 'none',
-		boxSizing: 'border-box' as const,
-		transition: 'border-color 0.2s, box-shadow 0.2s',
-		boxShadow: focusedField === field ? '0 0 0 3px rgba(0,200,255,0.15)' : 'none',
-	});
-
 	return (
-		<div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-			<img src='/login-bg.png' alt=''
-				style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0, filter: 'brightness(1.15)' }} />
-			<div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,10,0.35)', zIndex: 1 }} />
-			<div style={{ position: 'relative', zIndex: 2, width: 440, maxWidth: '92vw', background: 'rgba(5,15,35,0.75)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(0,200,255,0.2)', boxShadow: '0 0 40px rgba(0,180,255,0.15)', borderRadius: 16, padding: '36px 36px 32px' }}>
-				<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 28 }}>
-					<img src='/ravity-logo.png' alt='Ravity' style={{ height: 64, width: 'auto', marginBottom: 12 }} />
-					<p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, margin: 0 }}>Fleet Intelligence Platform</p>
+		<div className={styles.root}>
+			{/* Background image — same as before */}
+			<img
+				src='/login-bg.png'
+				alt=''
+				aria-hidden='true'
+				className={styles.bgImage}
+			/>
+			{/* ── [FIX DES-03] Overlay now uses purple-tinted dark, not pure black ── */}
+			<div className={styles.overlay} aria-hidden='true' />
+
+			{/* ── Login card — white, light, brand-aligned ─────────────────────── */}
+			<div className={styles.card} role='main'>
+				{/* Logo + tagline */}
+				<div className={styles.logoBlock}>
+					<img src='/ravity-logo.png' alt='Ravity Fleet Intelligence' className={styles.logo} />
+					<p className={styles.tagline}>Fleet Intelligence Platform</p>
 				</div>
-				<h2 style={{ color: '#fff', fontSize: 22, fontWeight: 700, marginBottom: 22, textAlign: 'center' }}>Sign In</h2>
+
+				{/* ── [FIX DES-03] Title now uses brand color, not white-on-dark ──── */}
+				<h1 className={styles.cardTitle}>Sign In</h1>
+
+				{/* Error banner */}
 				{formik.errors.loginPassword && formik.submitCount > 0 && (
-					<div style={{ background: 'rgba(244,67,54,0.15)', border: '1px solid rgba(244,67,54,0.4)', borderRadius: 8, padding: '10px 14px', marginBottom: 16, color: '#ff8a80', fontSize: 13 }}>
-						⚠️ {formik.errors.loginPassword}
+					<div className={styles.errorBanner} role='alert'>
+						<svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' aria-hidden='true'>
+							<circle cx='12' cy='12' r='10'/><line x1='12' y1='8' x2='12' y2='12'/><line x1='12' y1='16' x2='12.01' y2='16'/>
+						</svg>
+						{formik.errors.loginPassword}
 					</div>
 				)}
-				<form onSubmit={formik.handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-					<div>
-						<label htmlFor='loginUsername' style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Email Address</label>
-						<input id='loginUsername' name='loginUsername' type='text'
-							value={formik.values.loginUsername} onChange={formik.handleChange}
-							onFocus={() => setFocusedField('email')} onBlur={() => setFocusedField(null)}
-							placeholder='Enter your username or email' autoComplete='username'
-							style={inputStyle('email')} />
+
+				<form onSubmit={formik.handleSubmit} noValidate className={styles.form}>
+					{/* ── Email field ─────────────────────────────────────────────── */}
+					<div className={styles.field}>
+						{/* [FIX A11Y-01] htmlFor matches input id exactly */}
+						<label htmlFor='loginUsername' className={styles.label}>
+							{t('Email Address')}
+						</label>
+						<input
+							id='loginUsername'
+							name='loginUsername'
+							type='text'
+							value={formik.values.loginUsername}
+							onChange={formik.handleChange}
+							onFocus={() => setFocusedField('loginUsername')}
+							onBlur={() => setFocusedField(null)}
+							placeholder={t('Enter your username or email')}
+							autoComplete='username'
+							aria-invalid={!!formik.errors.loginUsername}
+							aria-describedby={formik.errors.loginUsername ? 'loginUsername-error' : undefined}
+							className={`${styles.input} ${focusedField === 'loginUsername' ? styles.inputFocused : ''} ${formik.errors.loginUsername && formik.submitCount > 0 ? styles.inputError : ''}`}
+						/>
+						{formik.errors.loginUsername && formik.submitCount > 0 && (
+							<span id='loginUsername-error' className={styles.fieldError} role='alert'>
+								{formik.errors.loginUsername}
+							</span>
+						)}
 					</div>
-					<div>
-						<label htmlFor='loginPassword' style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Password</label>
-						<input id='loginPassword' name='loginPassword' type='password'
-							value={formik.values.loginPassword} onChange={formik.handleChange}
-							onFocus={() => setFocusedField('password')} onBlur={() => setFocusedField(null)}
-							placeholder='Enter your password' autoComplete='current-password'
-							style={inputStyle('password')} />
+
+					{/* ── Password field ────────────────────────────────────────────── */}
+					<div className={styles.field}>
+						<label htmlFor='loginPassword' className={styles.label}>
+							{t('Password')}
+						</label>
+						<input
+							id='loginPassword'
+							name='loginPassword'
+							type='password'
+							value={formik.values.loginPassword}
+							onChange={formik.handleChange}
+							onFocus={() => setFocusedField('loginPassword')}
+							onBlur={() => setFocusedField(null)}
+							placeholder={t('Enter your password')}
+							autoComplete='current-password'
+							aria-invalid={!!formik.errors.loginPassword}
+							className={`${styles.input} ${focusedField === 'loginPassword' ? styles.inputFocused : ''}`}
+						/>
 					</div>
-					<div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -8 }}>
-						<Link to={`/${authPages.forgetPassword.path}`} style={{ color: 'rgba(0,200,255,0.8)', fontSize: 12, textDecoration: 'none' }}>
-							Forgot Password? Click here
+
+					{/* Forgot password */}
+					<div className={styles.forgotRow}>
+						<Link to={`/${authPages.forgetPassword.path}`} className={styles.forgotLink}>
+							{t('Forgot Password?')}
 						</Link>
 					</div>
-					<button type='submit' disabled={formik.isSubmitting}
-						style={{ width: '100%', padding: '13px', background: formik.isSubmitting ? 'rgba(0,150,200,0.5)' : 'linear-gradient(135deg,#00c8ff,#0066ff)', border: 'none', borderRadius: 10, color: '#fff', fontWeight: 700, fontSize: 15, cursor: formik.isSubmitting ? 'not-allowed' : 'pointer', marginTop: 4, letterSpacing: 0.5, boxShadow: formik.isSubmitting ? 'none' : '0 4px 20px rgba(0,150,255,0.4)' }}>
-						{formik.isSubmitting ? '⏳ Signing in...' : 'SIGN IN'}
+
+					{/* Submit */}
+					<button
+						type='submit'
+						disabled={formik.isSubmitting}
+						className={`${styles.submitBtn} ${formik.isSubmitting ? styles.submitBtnLoading : ''}`}
+					>
+						{formik.isSubmitting ? t('Signing in…') : t('SIGN IN')}
 					</button>
 				</form>
 			</div>

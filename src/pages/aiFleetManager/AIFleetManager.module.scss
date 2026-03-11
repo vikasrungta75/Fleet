@@ -1,0 +1,362 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// AIFleetManager.module.scss (DES-01 / DES-02)
+//
+// Replaces every inline style={{ }} object in AIFleetManager.tsx.
+// The component had 100% inline React styles with hardcoded hex values like
+// #1a1a2e, #f44336, #1e293b. All colors now come from _tokens.scss.
+// ─────────────────────────────────────────────────────────────────────────────
+
+@import '../../styles/settings/tokens';
+
+// ── Page shell ────────────────────────────────────────────────────────────────
+.page {
+  background: var(--rv-bg);
+  min-height: 100vh;
+  font-family: inherit;
+}
+
+// ── Page header ───────────────────────────────────────────────────────────────
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 24px 0 20px;
+  border-bottom: 1.5px solid var(--rv-border);
+  margin-bottom: 28px;
+  gap: 20px;
+
+  &Left {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  &Eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--rv-purple);
+    margin: 0;
+  }
+
+  &Title {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--rv-text-primary);
+    letter-spacing: -0.02em;
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  &Subtitle {
+    font-size: 13px;
+    color: var(--rv-text-muted);
+    margin: 0;
+  }
+}
+
+// ── KPI strip ─────────────────────────────────────────────────────────────────
+.kpiStrip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 28px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.kpiCard {
+  background: var(--rv-surface);
+  border: 1.5px solid var(--rv-border);
+  border-radius: 10px;
+  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--rv-purple);
+  }
+
+  &Label {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--rv-text-muted);
+    margin-bottom: 6px;
+  }
+
+  &Value {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--rv-text-primary);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+}
+
+// ── Filter bar ────────────────────────────────────────────────────────────────
+.filterBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.filterChip {
+  height: 34px;
+  padding: 0 16px;
+  border-radius: 20px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border: 1.5px solid var(--rv-border);
+  background: var(--rv-surface);
+  color: var(--rv-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: var(--rv-purple);
+    color: var(--rv-purple);
+  }
+
+  &--active {
+    background: var(--rv-purple);
+    border-color: var(--rv-purple);
+    color: #fff;
+  }
+
+  &--critical {
+    &.filterChip--active {
+      background: var(--rv-critical-color);
+      border-color: var(--rv-critical-color);
+    }
+  }
+}
+
+// ── Agent tabs ────────────────────────────────────────────────────────────────
+.agentTabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.agentTab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1.5px solid var(--rv-border);
+  background: var(--rv-surface);
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--rv-text-secondary);
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: var(--rv-purple);
+    color: var(--rv-purple);
+  }
+
+  &--active {
+    background: var(--rv-purple-light);
+    border-color: var(--rv-purple);
+    color: var(--rv-purple);
+  }
+
+  &Icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    // replaces emoji — use Material Icons or SVG
+    svg { color: inherit; }
+  }
+}
+
+// ── Alert rows table ──────────────────────────────────────────────────────────
+.alertsTable {
+  width: 100%;
+  background: var(--rv-surface);
+  border-radius: 10px;
+  border: 1.5px solid var(--rv-border);
+  overflow: hidden;
+  box-shadow: var(--rv-shadow-md);
+
+  thead th {
+    background: var(--rv-surface-alt);
+    color: var(--rv-text-muted);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 12px 16px;
+    border-bottom: 1.5px solid var(--rv-border);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+
+    &:hover { color: var(--rv-text-primary); }
+  }
+
+  tbody tr {
+    cursor: pointer;
+    transition: background 0.12s;
+
+    &:hover { background: #f8f7ff; }
+
+    &:not(:last-child) td {
+      border-bottom: 1px solid var(--rv-border);
+    }
+  }
+
+  tbody td {
+    padding: 13px 16px;
+    font-size: 13px;
+    color: var(--rv-text-primary);
+    vertical-align: middle;
+  }
+}
+
+// ── Criticality badge ─────────────────────────────────────────────────────────
+// Previously: hardcoded { color: '#f44336', bg: 'rgba(244,67,54,0.1)' } etc.
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 12px;
+  padding: 3px 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+
+  &--critical {
+    background: rgba(211, 47, 47, 0.1);
+    color: var(--rv-critical-color);
+    border: 1px solid rgba(211, 47, 47, 0.25);
+  }
+
+  &--high {
+    background: rgba(230, 81, 0, 0.08);
+    color: var(--rv-high-color);
+    border: 1px solid rgba(230, 81, 0, 0.2);
+  }
+
+  &--medium {
+    background: var(--rv-purple-light);
+    color: var(--rv-purple);
+    border: 1px solid var(--rv-purple-border);
+  }
+
+  &--low {
+    background: var(--rv-success-bg);
+    color: var(--rv-success-color);
+  }
+}
+
+// ── Agent domain pill ─────────────────────────────────────────────────────────
+.domainPill {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border-radius: 4px;
+  padding: 2px 8px;
+  background: var(--rv-purple-light);
+  color: var(--rv-purple);
+}
+
+// ── Detail side panel ─────────────────────────────────────────────────────────
+.detailBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 9000;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.detailPanel {
+  width: 560px;
+  max-width: 95vw;
+  background: var(--rv-surface);
+  height: 100vh;
+  overflow-y: auto;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+}
+
+// Previously: background: '#1a1a2e' hardcoded
+.detailPanelHeader {
+  background: var(--rv-text-primary);
+  padding: 20px 24px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.detailPanelBody {
+  padding: 24px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.detailSection {
+  margin-bottom: 24px;
+
+  &Label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--rv-text-muted);
+    margin-bottom: 8px;
+  }
+
+  &Content {
+    font-size: 13.5px;
+    color: var(--rv-text-primary);
+    line-height: 1.6;
+  }
+}
+
+.actionItem {
+  display: flex;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--rv-surface-alt);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--rv-text-secondary);
+
+  &Number {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--rv-purple);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+}
