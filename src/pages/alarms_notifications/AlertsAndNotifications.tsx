@@ -5,7 +5,6 @@ import PageWrapper from '../../layout/PageWrapper/PageWrapper';
 import Page from '../../layout/Page/Page';
 import SubHeader, { SubHeaderLeft } from '../../layout/SubHeader/SubHeader';
 import AlertDetailModal from './components/AlertDetailModal';
-import styles from './AlertsAndNotifications.module.scss';
 import {
 	fetchAlerts,
 	fetchResources,
@@ -21,17 +20,17 @@ import {
 const T = {
 	bg:           '#f4f5f9',
 	card:         '#ffffff',
-	border:       '#e8e8f0',
-	borderMed:    '#d0d0e0',
-	textPrimary:  '#1a1a2e',
-	textSecondary:'#4a4a6a',
-	textMuted:    '#9090b0',
+	border:       '#e8e8e8',
+	borderMed:    '#d0d0d0',
+	textPrimary:  '#1f1e1e',
+	textSecondary:'#444444',
+	textMuted:    '#888888',
 	pink:         '#f00d69',
-	purple:       '#6c5dd3',
-	purpleLight:  '#f0eeff',
-	purpleBorder: '#d4ccff',
-	rowHover:     '#f8f7ff',
-	headerBg:     '#fafaff',
+	purple:       '#f00d69',
+	purpleLight:  '#fff0f5',
+	purpleBorder: '#ffd0e5',
+	rowHover:     '#fff8fb',
+	headerBg:     '#fafafa',
 };
 
 // ── SEVERITY ──────────────────────────────────────────────────────────────────
@@ -50,7 +49,7 @@ const SEV: Record<Severity, { bg: string; color: string; dot: string }> = {
 	Critical: { bg: '#fff0f0', color: '#d32f2f', dot: '#d32f2f' },
 	High:     { bg: '#fff4ec', color: '#e65100', dot: '#ff6b35' },
 	Warning:  { bg: '#fffbec', color: '#b45309', dot: '#f59e0b' },
-	Info:     { bg: '#f0eeff', color: '#6c5dd3', dot: '#6c5dd3' },
+	Info:     { bg: '#fff0f5', color: '#f00d69', dot: '#f00d69' },
 	Normal:   { bg: '#f0fdf4', color: '#166534', dot: '#22c55e' },
 };
 
@@ -107,13 +106,13 @@ const SharePopup: FC<{ url: string; onClose: () => void }> = ({ url, onClose }) 
 	return (
 		<div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:10002, display:'flex', alignItems:'center', justifyContent:'center' }}
 			onClick={e => e.target === e.currentTarget && onClose()}>
-			<div style={{ background:'#fff', borderRadius:14, padding:28, width:440, maxWidth:'92vw', boxShadow:'0 8px 40px rgba(108,93,211,0.18)' }}>
+			<div style={{ background:'#fff', borderRadius:14, padding:28, width:440, maxWidth:'92vw', boxShadow:'0 8px 40px rgba(240,13,105,0.12)' }}>
 				<div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
 					<span style={{ color:T.textPrimary, fontWeight:700, fontSize:15 }}>Share Link</span>
 					<button onClick={onClose} style={{ background:'none', border:'none', color:T.textMuted, fontSize:20, cursor:'pointer', lineHeight:1 }}>✕</button>
 				</div>
 				<div style={{ display:'flex', gap:8 }}>
-					<input readOnly value={url} style={{ flex:1, background:'#f8f7ff', border:`1px solid ${T.purpleBorder}`, borderRadius:7, color:T.purple, padding:'8px 10px', fontSize:11, fontFamily:'monospace', outline:'none' }} />
+					<input readOnly value={url} style={{ flex:1, background:'#fff5f8', border:`1px solid ${T.purpleBorder}`, borderRadius:7, color:T.purple, padding:'8px 10px', fontSize:11, fontFamily:'monospace', outline:'none' }} />
 					<button onClick={copy} style={{ background:copied ? '#22c55e' : T.pink, border:'none', color:'#fff', borderRadius:7, padding:'8px 16px', cursor:'pointer', fontWeight:700, fontSize:12, whiteSpace:'nowrap' }}>
 						{copied ? '✓ Copied' : 'Copy'}
 					</button>
@@ -293,7 +292,7 @@ const FilterBar: FC<{
 	placeholder: string; count: number; total: number; label: string;
 }> = ({ search, onSearch, options, selected, onSelect, placeholder, count, total, label }) => (
 	<div style={{ display:'flex', gap:10, marginBottom:20, flexWrap:'wrap', alignItems:'center' }}>
-		<div style={{ display:'flex', alignItems:'center', gap:6, background:'#fff', border:`1px solid ${T.border}`, borderRadius:8, padding:'0 12px', boxShadow:'0 1px 4px rgba(108,93,211,0.06)' }}>
+		<div style={{ display:'flex', alignItems:'center', gap:6, background:'#fff', border:`1px solid ${T.border}`, borderRadius:8, padding:'0 12px', boxShadow:'0 1px 4px rgba(0,0,0,0.04)' }}>
 			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.textMuted} strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
 			<input value={search} onChange={e => onSearch(e.target.value)} placeholder='Search…'
 				style={{ background:'transparent', border:'none', color:T.textPrimary, padding:'8px 6px', fontSize:13, outline:'none', width:180 }} />
@@ -332,8 +331,8 @@ const Pagination: FC<{ page: number; totalPages: number; total: number; onPage: 
 const ALERT_TYPE_COLOR: Record<string, string> = {
 	'Device Normal':      '#2da44e',
 	'About To Sleep':     '#f59e0b',
-	'Ignition Off':       '#6c5dd3',
-	'Ignition On':        '#6c5dd3',
+	'Ignition Off':       '#f00d69',
+	'Ignition On':        '#f00d69',
 	'Emergency Sos':      '#d32f2f',
 	'Emergency SOS':      '#d32f2f',
 	'Hard Braking':       '#e65100',
@@ -343,14 +342,14 @@ const ALERT_TYPE_COLOR: Record<string, string> = {
 	'Overspeed':          '#d32f2f',
 	'Fatigue Detection':  '#7b1fa2',
 	'Phone Use':          '#c62828',
-	'Lane Departure':     '#6c5dd3',
+	'Lane Departure':     '#f00d69',
 	'Collision Warning':  '#b71c1c',
 	'Connection Lost':    '#c62828',
 	'Tailgating':         '#f39c12',
 	'Seatbelt':           '#1abc9c',
 };
 const getAlertTypeColor = (name: string) =>
-	ALERT_TYPE_COLOR[name] || ALERT_TYPE_COLOR[name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()] || '#6c5dd3';
+	ALERT_TYPE_COLOR[name] || ALERT_TYPE_COLOR[name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()] || '#f00d69';
 
 // Inline media attachment icons (like Image 1 — outline when no media, filled/coloured when available)
 const AttachmentCell: FC<{ alert: IotAlert }> = ({ alert }) => {
@@ -473,7 +472,7 @@ const AlertsTab: FC<{ onSelectAlert: (a: IotAlert) => void }> = ({ onSelectAlert
 				options={alertTypes} selected={typeFilter} onSelect={v => { setTypeFilter(v); setPage(1); }}
 				placeholder='All Alert Types' count={displayed.length} total={total} label='Alerts' />
 
-			<div style={{ background:T.card, borderRadius:12, border:`1px solid ${T.border}`, overflow:'auto', boxShadow:'0 2px 8px rgba(108,93,211,0.07)' }}>
+			<div style={{ background:T.card, borderRadius:12, border:`1px solid ${T.border}`, overflow:'auto', boxShadow:'0 2px 8px rgba(0,0,0,0.05)' }}>
 				{/* Header */}
 				<div style={{ display:'grid', gridTemplateColumns:grid, borderBottom:`1px solid ${T.border}`, padding:'11px 20px', background:T.headerBg, minWidth:900 }}>
 					{COLS.map(({ label, field }) => (
@@ -549,13 +548,13 @@ const AlertsTab: FC<{ onSelectAlert: (a: IotAlert) => void }> = ({ onSelectAlert
 // ── MEDIA GRID CARD ───────────────────────────────────────────────────────────
 const VideoCard: FC<{ r: IotResource; onClick: () => void }> = ({ r, onClick }) => (
 	<div onClick={onClick}
-		style={{ background:T.card, borderRadius:12, overflow:'hidden', cursor:'pointer', border:`1px solid ${T.border}`, boxShadow:'0 2px 8px rgba(108,93,211,0.06)', transition:'transform 0.15s, box-shadow 0.15s' }}
-		onMouseEnter={e => { const d = e.currentTarget as HTMLDivElement; d.style.transform = 'translateY(-2px)'; d.style.boxShadow = '0 6px 20px rgba(108,93,211,0.16)'; }}
-		onMouseLeave={e => { const d = e.currentTarget as HTMLDivElement; d.style.transform = 'none'; d.style.boxShadow = '0 2px 8px rgba(108,93,211,0.06)'; }}>
+		style={{ background:T.card, borderRadius:12, overflow:'hidden', cursor:'pointer', border:`1px solid ${T.border}`, boxShadow:'0 2px 8px rgba(0,0,0,0.04)', transition:'transform 0.15s, box-shadow 0.15s' }}
+		onMouseEnter={e => { const d = e.currentTarget as HTMLDivElement; d.style.transform = 'translateY(-2px)'; d.style.boxShadow = '0 6px 20px rgba(240,13,105,0.12)'; }}
+		onMouseLeave={e => { const d = e.currentTarget as HTMLDivElement; d.style.transform = 'none'; d.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'; }}>
 		<div style={{ position:'relative', background:'#111', height:130 }}>
 			<video src={resolveMediaUrl(r.storagePath)} style={{ width:'100%', height:'100%', objectFit:'cover', opacity:0.8 }} preload='metadata' />
 			<div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
-				<div style={{ width:38, height:38, background:T.purple, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:`0 4px 14px rgba(108,93,211,0.5)` }}>
+				<div style={{ width:38, height:38, background:T.purple, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:`0 4px 14px rgba(240,13,105,0.4)` }}>
 					<IconPlay size={14} />
 				</div>
 			</div>

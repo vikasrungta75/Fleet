@@ -2,7 +2,6 @@
 import React, { FC, useState, useMemo } from 'react';
 import PageWrapper from '../../layout/PageWrapper/PageWrapper';
 import Page from '../../layout/Page/Page';
-import styles from './AIFleetManager.module.scss';
 import SubHeader, { SubHeaderLeft, SubHeaderRight } from '../../layout/SubHeader/SubHeader';
 
 // ── AGENT DEFINITIONS ────────────────────────────────────────────────────────
@@ -46,7 +45,7 @@ const ALL_ALERTS = [
 const CRITICALITY_CONFIG: Record<string, { color: string; bg: string; label: string }> = {
 	CRITICAL: { color: '#f44336', bg: 'rgba(244,67,54,0.1)', label: 'Critical' },
 	HIGH: { color: '#ff9800', bg: 'rgba(255,152,0,0.1)', label: 'High' },
-	MEDIUM: { color: '#2196f3', bg: 'rgba(33,150,243,0.1)', label: 'Medium' },
+	MEDIUM: { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', label: 'Medium' },
 	LOW: { color: '#4caf50', bg: 'rgba(76,175,80,0.1)', label: 'Low' },
 };
 
@@ -73,7 +72,7 @@ const DetailPanel: FC<{ alert: any; onClose: () => void }> = ({ alert, onClose }
 			onClick={e => e.target === e.currentTarget && onClose()}>
 			<div style={{ width: 560, maxWidth: '95vw', background: '#fff', height: '100vh', overflowY: 'auto', boxShadow: '-4px 0 24px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column' }}>
 				{/* Header */}
-				<div style={{ background: '#1a1a2e', padding: '20px 24px', color: '#fff' }}>
+				<div style={{ background: '#ffffff', padding: '20px 24px', color: '#1f1e1e', borderBottom: '3px solid #f00d69' }}>
 					<div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
 						<div>
 							<div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
@@ -91,16 +90,16 @@ const DetailPanel: FC<{ alert: any; onClose: () => void }> = ({ alert, onClose }
 					{/* Key metrics */}
 					<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
 						{[['Entity Affected', alert.entity], ['Financial Impact', alert.financialImpact], ['Resolution Time', alert.resolutionTime], ['Detected', alert.date]].map(([label, value]) => (
-							<div key={label} style={{ background: '#f8f9fa', borderRadius: 8, padding: '14px 16px' }}>
+							<div key={label} style={{ background: '#fff5f8', borderRadius: 8, padding: '14px 16px', border: '1px solid #fde8ef' }}>
 								<div style={{ color: '#888', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>{label}</div>
-								<div style={{ color: '#1a1a2e', fontWeight: 700, fontSize: 14 }}>{value}</div>
+								<div style={{ color: '#1f1e1e', fontWeight: 700, fontSize: 14 }}>{value}</div>
 							</div>
 						))}
 					</div>
 
 					{/* AI Recommended Actions */}
 					<div style={{ marginBottom: 24 }}>
-						<div style={{ fontWeight: 700, fontSize: 14, color: '#1a1a2e', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+						<div style={{ fontWeight: 700, fontSize: 14, color: '#1f1e1e', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
 							<span style={{ background: 'linear-gradient(135deg,#f00d69,#ff3399)', color: '#fff', fontSize: 10, fontWeight: 700, borderRadius: 8, padding: '2px 8px' }}>AI</span>
 							Recommended Actions
 						</div>
@@ -173,14 +172,14 @@ const AIFleetManager: FC = () => {
 			<SubHeader>
 				<SubHeaderLeft>
 					<div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-						<span style={{ fontSize: 20, fontWeight: 700, color: '#1a1a2e' }}>AI Fleet Manager</span>
+						<span style={{ fontSize: 20, fontWeight: 700, color: '#1f1e1e' }}>AI Fleet Manager</span>
 						<span style={{ background: 'linear-gradient(135deg,#f00d69,#ff3399)', color: '#fff', fontSize: 11, fontWeight: 700, borderRadius: 12, padding: '3px 12px' }}>AI POWERED</span>
 					</div>
 				</SubHeaderLeft>
 				<SubHeaderRight>
 					<div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
 						{/* View toggle */}
-						<div style={{ display: 'flex', background: '#f5f5f5', borderRadius: 8, padding: 3, gap: 2 }}>
+						<div style={{ display: 'flex', background: '#f0f0f0', borderRadius: 8, padding: 3, gap: 2 }}>
 							{(['grid', 'list'] as const).map(v => (
 								<button key={v} onClick={() => setViewMode(v)}
 									style={{ padding: '6px 14px', background: viewMode === v ? '#fff' : 'transparent', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 500, color: viewMode === v ? '#f00d69' : '#888', boxShadow: viewMode === v ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
@@ -189,7 +188,7 @@ const AIFleetManager: FC = () => {
 							))}
 						</div>
 						<button onClick={() => window.alert('Exporting AI insights...')}
-							style={{ background: '#1a1a2e', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 16px', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+							style={{ background: '#1f1e1e', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 16px', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
 							⬇ Export
 						</button>
 					</div>
@@ -200,7 +199,7 @@ const AIFleetManager: FC = () => {
 				{/* Summary KPI cards */}
 				<div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
 					{[
-						{ label: 'Total Alerts', value: ALL_ALERTS.length, color: '#1a1a2e', icon: '🔔' },
+						{ label: 'Total Alerts', value: ALL_ALERTS.length, color: '#1f1e1e', icon: '🔔' },
 						{ label: 'Critical', value: counts.CRITICAL, color: '#f44336', icon: '🔴' },
 						{ label: 'High Priority', value: counts.HIGH, color: '#ff9800', icon: '🟠' },
 						{ label: 'Financial Impact', value: totalImpact, color: '#f00d69', icon: '💰' },
@@ -268,7 +267,7 @@ const AIFleetManager: FC = () => {
 
 									<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
 										<div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-											<span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 13, color: '#1a1a2e' }}>{alert.id}</span>
+											<span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 13, color: '#1f1e1e' }}>{alert.id}</span>
 											<span style={{ background: cfg.bg, color: cfg.color, fontSize: 10, fontWeight: 700, borderRadius: 10, padding: '2px 8px' }}>{cfg.label}</span>
 										</div>
 										<span style={{ fontSize: 11, color: '#aaa' }}>{alert.date}</span>
@@ -283,7 +282,7 @@ const AIFleetManager: FC = () => {
 									<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, paddingTop: 14, borderTop: '1px solid #f0f0f0', marginBottom: 14 }}>
 										{[['🎯 Entity', alert.entity], ['💰 Impact', alert.financialImpact]].map(([label, value]) => (
 											<div key={label as string} style={{ fontSize: 12 }}>
-												<span style={{ color: '#aaa' }}>{label as string}: </span>
+												<span style={{ color: '#888888' }}>{label as string}: </span>
 												<span style={{ fontWeight: 600, color: '#333' }}>{value as string}</span>
 											</div>
 										))}
@@ -325,9 +324,9 @@ const AIFleetManager: FC = () => {
 									const agent = AGENTS[alert.agentId];
 									return (
 										<tr key={alert.id} onClick={() => setSelectedAlert(alert)} style={{ borderBottom: '1px solid #f0f0f0', cursor: 'pointer' }}
-											onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = '#fafafa'}
+											onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = '#fff5f8'}
 											onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = 'transparent'}>
-											<td style={{ padding: '12px 14px', fontFamily: 'monospace', fontWeight: 700, fontSize: 12, color: '#1a1a2e' }}>{alert.id}</td>
+											<td style={{ padding: '12px 14px', fontFamily: 'monospace', fontWeight: 700, fontSize: 12, color: '#1f1e1e' }}>{alert.id}</td>
 											<td style={{ padding: '12px 14px' }}>
 												<span style={{ background: cfg.bg, color: cfg.color, fontSize: 10, fontWeight: 700, borderRadius: 10, padding: '3px 10px' }}>{cfg.label}</span>
 											</td>

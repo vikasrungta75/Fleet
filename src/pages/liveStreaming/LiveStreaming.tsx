@@ -22,11 +22,11 @@ export const capturedMediaStore: Array<{
 
 const T = {
   bg: '#f8f9fa', card: '#ffffff', border: '#e8e8e8',
-  textPrimary: '#1a1a2e', textSecondary: '#555', textMuted: '#888',
+  textPrimary: '#1f1e1e', textSecondary: '#555', textMuted: '#888',
   pink: '#f00d69', green: '#2da44e', red: '#d0021b', blue: '#1565c0', blueBg: '#e3f2fd',
-  purple: '#6c5dd3',
-  purpleLight: '#f0eeff',
-  purpleBorder: '#d4ccff',
+  purple: '#f00d69',
+  purpleLight: '#fff0f5',
+  purpleBorder: '#ffd0e5',
 };
 
 const MAX_RETRIES = 5;
@@ -84,10 +84,10 @@ const Stepper: FC<{ label: string; value: number; min: number; max: number; onCh
     <div style={{ fontSize: 11, color: T.textMuted, marginBottom: 8, fontWeight: 600 }}>{label}</div>
     <div style={{ display: 'flex', alignItems: 'center', border: `1.5px solid ${T.purpleBorder}`, borderRadius: 8, overflow: 'hidden', background: '#fff' }}>
       <button onClick={() => onChange(Math.max(min, value - 1))}
-        style={{ width: 36, height: 36, background: value <= min ? '#f8f9fa' : T.purpleLight, border: 'none', cursor: value <= min ? 'not-allowed' : 'pointer', fontSize: 18, color: value <= min ? '#ccc' : T.purple, flexShrink: 0, fontWeight: 700 }}>−</button>
+        style={{ width: 36, height: 36, background: value <= min ? '#f8f9fa' : T.purpleLight, border: 'none', cursor: value <= min ? 'not-allowed' : 'pointer', fontSize: 18, color: value <= min ? '#ccc' : T.pink, flexShrink: 0, fontWeight: 700 }}>−</button>
       <span style={{ flex: 1, textAlign: 'center', fontSize: 15, fontWeight: 700, color: T.textPrimary }}>{value}</span>
       <button onClick={() => onChange(Math.min(max, value + 1))}
-        style={{ width: 36, height: 36, background: value >= max ? '#f8f9fa' : T.purpleLight, border: 'none', cursor: value >= max ? 'not-allowed' : 'pointer', fontSize: 18, color: value >= max ? '#ccc' : T.purple, flexShrink: 0, fontWeight: 700 }}>+</button>
+        style={{ width: 36, height: 36, background: value >= max ? '#f8f9fa' : T.purpleLight, border: 'none', cursor: value >= max ? 'not-allowed' : 'pointer', fontSize: 18, color: value >= max ? '#ccc' : T.pink, flexShrink: 0, fontWeight: 700 }}>+</button>
     </div>
     <div style={{ fontSize: 10, color: T.textMuted, marginTop: 4, textAlign: 'center' }}>max {max}</div>
   </div>
@@ -122,7 +122,7 @@ const CapturePanel: FC<CapturePanelProps> = ({ onSingleCapture, onMultiCapture, 
     <div style={{ position: 'relative' }}>
       {/* Trigger button — purple Ravity style */}
       <button onClick={() => setOpen(o => !o)} disabled={isCapturing}
-        style={{ background: isCapturing ? '#aaa' : T.purple, border: 'none', color: '#fff', borderRadius: 7, padding: '7px 16px', cursor: isCapturing ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 700, boxShadow: '0 2px 10px rgba(108,93,211,0.35)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6 }}>
+        style={{ background: isCapturing ? '#aaa' : T.pink, border: 'none', color: '#fff', borderRadius: 7, padding: '7px 16px', cursor: isCapturing ? 'not-allowed' : 'pointer', fontSize: 12, fontWeight: 700, boxShadow: '0 2px 10px rgba(240,13,105,0.25)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6 }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
           <circle cx="12" cy="13" r="4"/>
@@ -133,17 +133,17 @@ const CapturePanel: FC<CapturePanelProps> = ({ onSingleCapture, onMultiCapture, 
       {open && !isCapturing && (
         <>
           <div style={{ position: 'fixed', inset: 0, zIndex: 99 }} onClick={() => setOpen(false)} />
-          <div style={{ position: 'absolute', bottom: 46, right: 0, background: '#fff', border: `1.5px solid ${T.purpleBorder}`, borderRadius: 16, padding: 20, width: 370, boxShadow: '0 8px 32px rgba(108,93,211,0.2)', zIndex: 100 }}>
+          <div style={{ position: 'absolute', bottom: 46, right: 0, background: '#fff', border: `1.5px solid ${T.purpleBorder}`, borderRadius: 16, padding: 20, width: 370, boxShadow: '0 8px 32px rgba(240,13,105,0.14)', zIndex: 100 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: T.textPrimary, marginBottom: 14 }}>Capture Mode</div>
 
             {/* Mode selector cards */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
               {modes.map(m => (
                 <div key={m.key} onClick={() => setMode(m.key)}
-                  style={{ border: `2px solid ${mode === m.key ? T.purple : T.border}`, background: mode === m.key ? T.purpleLight : '#fafbff', borderRadius: 12, padding: '12px 8px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.15s', boxShadow: mode === m.key ? `0 2px 8px rgba(108,93,211,0.18)` : 'none' }}>
+                  style={{ border: `2px solid ${mode === m.key ? T.pink : T.border}`, background: mode === m.key ? T.purpleLight : '#fafafa', borderRadius: 12, padding: '12px 8px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.15s', boxShadow: mode === m.key ? `0 2px 8px rgba(240,13,105,0.12)` : 'none' }}>
                   <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6 }}>{m.icon(mode === m.key)}</div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: mode === m.key ? T.purple : T.textPrimary }}>{m.label}</div>
-                  <div style={{ fontSize: 9, color: mode === m.key ? T.purple : T.textMuted, marginTop: 2 }}>{m.sub}</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: mode === m.key ? T.pink : T.textPrimary }}>{m.label}</div>
+                  <div style={{ fontSize: 9, color: mode === m.key ? T.pink : T.textMuted, marginTop: 2 }}>{m.sub}</div>
                 </div>
               ))}
             </div>
@@ -170,7 +170,7 @@ const CapturePanel: FC<CapturePanelProps> = ({ onSingleCapture, onMultiCapture, 
               <button onClick={() => setOpen(false)}
                 style={{ flex: 1, background: '#f5f5f5', border: `1px solid ${T.border}`, color: T.textSecondary, borderRadius: 8, padding: '9px 0', cursor: 'pointer', fontSize: 12, fontWeight: 500 }}>Cancel</button>
               <button onClick={handleCapture}
-                style={{ flex: 2, background: T.purple, border: 'none', color: '#fff', borderRadius: 8, padding: '9px 0', cursor: 'pointer', fontSize: 12, fontWeight: 700, boxShadow: '0 2px 8px rgba(108,93,211,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                style={{ flex: 2, background: T.pink, border: 'none', color: '#fff', borderRadius: 8, padding: '9px 0', cursor: 'pointer', fontSize: 12, fontWeight: 700, boxShadow: '0 2px 8px rgba(240,13,105,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                 {mode === 'video'
                   ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><polygon points="23,7 16,12 23,17 23,7" fill="#fff"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
                   : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>}
@@ -539,7 +539,7 @@ export const LiveStreamModal: FC<{ device: DeviceWithChannels; onClose: () => vo
                 <span style={{ background: 'rgba(0,0,0,0.5)', color: 'rgba(255,255,255,0.7)', fontSize: 10, borderRadius: 3, padding: '2px 7px', fontFamily: 'monospace' }}>{liveTime.toTimeString().slice(0, 8)}</span>
               </div>
               {isCapturing && (
-                <div style={{ position: 'absolute', top: 10, right: 12, background: 'rgba(108,93,211,0.85)', color: '#fff', fontSize: 11, fontWeight: 700, borderRadius: 6, padding: '4px 12px', zIndex: 10 }}>
+                <div style={{ position: 'absolute', top: 10, right: 12, background: 'rgba(240,13,105,0.85)', color: '#fff', fontSize: 11, fontWeight: 700, borderRadius: 6, padding: '4px 12px', zIndex: 10 }}>
                   ⏺ {captureProgress}
                 </div>
               )}
