@@ -29,6 +29,8 @@ interface IIconProps extends HTMLAttributes<HTMLSpanElement> {
 	color?: TColor;
 	size?: TIconsSize;
 	forceFamily?: null | 'custom' | 'material';
+	/** A11Y-05: aria-label for icon-only interactive elements (edit/delete/view buttons) */
+	'aria-label'?: string;
 }
 const Icon = forwardRef<HTMLSpanElement, IIconProps>(
 	({ icon, className, color, size, forceFamily, ...props }, ref) => {

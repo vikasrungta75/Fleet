@@ -3,16 +3,19 @@ import React, { FC, useState, useMemo } from 'react';
 import PageWrapper from '../../layout/PageWrapper/PageWrapper';
 import Page from '../../layout/Page/Page';
 import SubHeader, { SubHeaderLeft, SubHeaderRight } from '../../layout/SubHeader/SubHeader';
+import Icon from '../../components/icon/Icon';
 
 // ── AGENT DEFINITIONS ────────────────────────────────────────────────────────
+// FIX FEAT-08: Replaced emoji icons (🚛🔧🛡️) with Material icon name strings.
+// Emoji render inconsistently across platforms and cannot be styled.
 const AGENTS: Record<string, { name: string; domain: string; icon: string; description: string }> = {
-	FOI: { name: 'Fleet Operations Intelligence', domain: 'Operations', icon: '🚛', description: 'Real-time fleet operations monitoring and optimization' },
-	MRS: { name: 'Maintenance & Reliability System', domain: 'Maintenance', icon: '🔧', description: 'Predictive maintenance and reliability analytics' },
-	SCM: { name: 'Safety & Compliance Monitor', domain: 'Safety', icon: '🛡️', description: 'Driver safety and regulatory compliance tracking' },
-	DWM: { name: 'Driver Workforce Manager', domain: 'HR & Workforce', icon: '👥', description: 'Driver retention, performance and engagement' },
-	FAO: { name: 'Financial Analytics & Optimization', domain: 'Finance', icon: '💰', description: 'Cost management and financial performance' },
-	SPS: { name: 'Strategic Planning System', domain: 'Strategy', icon: '📊', description: 'Long-term fleet planning and electrification' },
-	FDP: { name: 'Fraud Detection & Prevention', domain: 'Security', icon: '🔍', description: 'Anomaly detection and fraud prevention' },
+	FOI: { name: 'Fleet Operations Intelligence', domain: 'Operations', icon: 'LocalShipping', description: 'Real-time fleet operations monitoring and optimization' },
+	MRS: { name: 'Maintenance & Reliability System', domain: 'Maintenance', icon: 'Build', description: 'Predictive maintenance and reliability analytics' },
+	SCM: { name: 'Safety & Compliance Monitor', domain: 'Safety', icon: 'Security', description: 'Driver safety and regulatory compliance tracking' },
+	DWM: { name: 'Driver Workforce Manager', domain: 'HR & Workforce', icon: 'People', description: 'Driver retention, performance and engagement' },
+	FAO: { name: 'Financial Analytics & Optimization', domain: 'Finance', icon: 'AttachMoney', description: 'Cost management and financial performance' },
+	SPS: { name: 'Strategic Planning System', domain: 'Strategy', icon: 'BarChart', description: 'Long-term fleet planning and electrification' },
+	FDP: { name: 'Fraud Detection & Prevention', domain: 'Security', icon: 'Search', description: 'Anomaly detection and fraud prevention' },
 };
 
 // ── ALERT DATA ────────────────────────────────────────────────────────────────
@@ -79,7 +82,7 @@ const DetailPanel: FC<{ alert: any; onClose: () => void }> = ({ alert, onClose }
 								<span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 15 }}>{alert.id}</span>
 								<span style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.color}40`, fontSize: 11, fontWeight: 700, borderRadius: 12, padding: '2px 10px', textTransform: 'uppercase' }}>{cfg.label}</span>
 							</div>
-							<div style={{ color: '#0af', fontSize: 12, fontWeight: 600 }}>{agent?.icon} {agent?.name}</div>
+							<div style={{ color: '#0af', fontSize: 12, fontWeight: 600 }}><Icon icon={agent?.icon as any} size='sm' /> {agent?.name}</div>
 						</div>
 						<button onClick={onClose} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 18 }}>✕</button>
 					</div>
@@ -199,14 +202,14 @@ const AIFleetManager: FC = () => {
 				{/* Summary KPI cards */}
 				<div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
 					{[
-						{ label: 'Total Alerts', value: ALL_ALERTS.length, color: '#1f1e1e', icon: '🔔' },
-						{ label: 'Critical', value: counts.CRITICAL, color: '#f44336', icon: '🔴' },
-						{ label: 'High Priority', value: counts.HIGH, color: '#ff9800', icon: '🟠' },
-						{ label: 'Financial Impact', value: totalImpact, color: '#f00d69', icon: '💰' },
+						{ label: 'Total Alerts', value: ALL_ALERTS.length, color: '#1f1e1e', icon: 'Notifications' },
+						{ label: 'Critical', value: counts.CRITICAL, color: '#f44336', icon: 'Error' },
+						{ label: 'High Priority', value: counts.HIGH, color: '#ff9800', icon: 'Warning' },
+						{ label: 'Financial Impact', value: totalImpact, color: '#f00d69', icon: 'AttachMoney' },
 					].map(kpi => (
 						<div key={kpi.label} style={{ background: '#fff', border: '1px solid #e8e8e8', borderRadius: 10, padding: '18px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
 							<div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-								<span style={{ fontSize: 16 }}>{kpi.icon}</span>
+								<Icon icon={kpi.icon as any} size='md' />
 								<span style={{ fontSize: 12, color: '#888' }}>{kpi.label}</span>
 							</div>
 							<div style={{ fontSize: 28, fontWeight: 800, color: kpi.color, fontFamily: 'monospace' }}>{kpi.value}</div>
@@ -244,7 +247,7 @@ const AIFleetManager: FC = () => {
 						style={{ background: '#f5f5f5', border: '1px solid #e0e0e0', borderRadius: 7, padding: '7px 12px', fontSize: 13, cursor: 'pointer', color: '#555', outline: 'none' }}>
 						<option value='ALL'>All Agents</option>
 						{Object.entries(AGENTS).map(([id, agent]) => (
-							<option key={id} value={id}>{agent.icon} {agent.name}</option>
+							<option key={id} value={id}>{agent.name}</option>
 						))}
 					</select>
 
@@ -273,7 +276,7 @@ const AIFleetManager: FC = () => {
 										<span style={{ fontSize: 11, color: '#aaa' }}>{alert.date}</span>
 									</div>
 
-									<div style={{ color: '#f00d69', fontSize: 11, fontWeight: 600, marginBottom: 6 }}>{agent?.icon} {agent?.name}</div>
+									<div style={{ color: '#f00d69', fontSize: 11, fontWeight: 600, marginBottom: 6 }}><Icon icon={agent?.icon as any} size='sm' /> {agent?.name}</div>
 
 									<p style={{ color: '#333', fontSize: 13, lineHeight: 1.6, marginBottom: 14, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' as any, overflow: 'hidden' }}>
 										{alert.description}
@@ -330,7 +333,7 @@ const AIFleetManager: FC = () => {
 											<td style={{ padding: '12px 14px' }}>
 												<span style={{ background: cfg.bg, color: cfg.color, fontSize: 10, fontWeight: 700, borderRadius: 10, padding: '3px 10px' }}>{cfg.label}</span>
 											</td>
-											<td style={{ padding: '12px 14px', fontSize: 12, color: '#f00d69', fontWeight: 600 }}>{agent?.icon} {agent?.domain}</td>
+											<td style={{ padding: '12px 14px', fontSize: 12, color: '#f00d69', fontWeight: 600 }}><Icon icon={agent?.icon as any} size='sm' /> {agent?.domain}</td>
 											<td style={{ padding: '12px 14px', fontSize: 12, color: '#333', maxWidth: 280 }}>
 												<div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{alert.description}</div>
 											</td>

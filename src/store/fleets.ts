@@ -1,7 +1,7 @@
 import { createModel } from '@rematch/core';
 import type { RootModel } from '.';
 import { dataIngestion, getData } from '../services/commonService';
-import { addVehicule } from '../services/fleeetsService';
+import { addVehicule } from '../services/fleetsService';
 import { generateRestAPI } from './../helpers/helpers';
 
 export const fleets = createModel<RootModel>()({

@@ -90,17 +90,17 @@ const Login: FC = () => {
 						<label htmlFor='loginUsername' style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Email Address</label>
 						<input id='loginUsername' name='loginUsername' type='text'
 							value={formik.values.loginUsername} onChange={formik.handleChange}
-							onFocus={() => setFocusedField('email')} onBlur={() => setFocusedField(null)}
+							onFocus={() => setFocusedField('loginUsername')} onBlur={() => setFocusedField(null)}
 							placeholder='Enter your username or email' autoComplete='username'
-							style={inputStyle('email')} />
+							style={inputStyle('loginUsername')} />
 					</div>
 					<div>
 						<label htmlFor='loginPassword' style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Password</label>
 						<input id='loginPassword' name='loginPassword' type='password'
 							value={formik.values.loginPassword} onChange={formik.handleChange}
-							onFocus={() => setFocusedField('password')} onBlur={() => setFocusedField(null)}
+							onFocus={() => setFocusedField('loginPassword')} onBlur={() => setFocusedField(null)}
 							placeholder='Enter your password' autoComplete='current-password'
-							style={inputStyle('password')} />
+							style={inputStyle('loginPassword')} />
 					</div>
 					<div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -8 }}>
 						<Link to={`/${authPages.forgetPassword.path}`} style={{ color: '#f00d69', fontSize: 12, textDecoration: 'none' }}>

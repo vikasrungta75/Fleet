@@ -1,6 +1,8 @@
 import React, { FC, useState } from 'react';
+import SubHeader, { SubHeaderLeft } from '../../layout/SubHeader/SubHeader'; // FIX UX-02
 import PageWrapper from '../../layout/PageWrapper/PageWrapper';
 import { dashboardMenu } from '../../menu';
+import Breadcrumb from '../../components/bootstrap/Breadcrumb';
 import Page from '../../layout/Page/Page';
 import { useTranslation } from 'react-i18next';
 import AssistanceButton from '../common/assitance-button/AssistanceButton';
@@ -36,18 +38,19 @@ const ReportDashboard: FC = () => {
 	return (
 		<>
 			<PageWrapper isProtected={true} title={dashboardMenu.reports.text}>
-				{/* <SubHeader>
-                    <SubHeaderLeft>
-                        <Breadcrumb
-                            list={[
-                                {
-                                    title: t(`${dashboardMenu.reports.text}`),
-                                    to: `../${dashboardMenu.reports.path}`,
-                                },
-                            ]}
-                        />
-                    </SubHeaderLeft>
-                </SubHeader> */}
+				{/* FIX UX-02: Re-enabled breadcrumb navigation */}
+				<SubHeader>
+					<SubHeaderLeft>
+						<Breadcrumb
+							list={[
+								{
+									title: t(`${dashboardMenu.reports.text}`),
+									to: `../${dashboardMenu.reports.path}`,
+								},
+							]}
+						/>
+					</SubHeaderLeft>
+				</SubHeader>
 				<Page className='mw-100 px-0'>
 					<div className='d-flex align-items-center'>
 						<div className='d-flex pb-3 mb-3 border-secondary w-100 justify-content-between align-items-center'>

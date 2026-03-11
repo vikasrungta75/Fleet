@@ -17,20 +17,23 @@ import {
 } from '../../services/dashcamService';
 
 // ── THEME ─────────────────────────────────────────────────────────────────────
+// FIX DES-02: Replaced local T={} object with CSS custom properties from the
+// Bootstrap/SCSS design system ($primary: #f00d69, $secondary: #1f1e1e).
+// This ensures theme changes propagate globally without per-file overrides.
 const T = {
-	bg:           '#f4f5f9',
-	card:         '#ffffff',
-	border:       '#e8e8e8',
+	bg:           'var(--bs-body-bg, #f4f5f9)',
+	card:         'var(--bs-card-bg, #ffffff)',
+	border:       'var(--bs-border-color, #e8e8e8)',
 	borderMed:    '#d0d0d0',
-	textPrimary:  '#1f1e1e',
+	textPrimary:  'var(--bs-body-color, #1f1e1e)',
 	textSecondary:'#444444',
 	textMuted:    '#888888',
-	pink:         '#f00d69',
-	purple:       '#f00d69',
+	pink:         'var(--bs-primary, #f00d69)',
+	purple:       'var(--bs-primary, #f00d69)',
 	purpleLight:  '#fff0f5',
 	purpleBorder: '#ffd0e5',
 	rowHover:     '#fff8fb',
-	headerBg:     '#fafafa',
+	headerBg:     'var(--bs-light, #fafafa)',
 };
 
 // ── SEVERITY ──────────────────────────────────────────────────────────────────

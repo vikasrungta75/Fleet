@@ -59,17 +59,10 @@ export const dashboardMenu = {
         hide: false,
     },
 
- 
-    alertsNotifications: {
-        id: 'alerts&notifications',
-        text: 'Alerts',
-        path: 'alerts',
-        icon: 'NotificationsActive',
-        subMenu: null,
-        searchable: true,
-        hide: true,
-    },
- 
+    // FIX DE-06: Removed duplicate alertsNotifications entry (was hide:true,
+    // same path 'alerts' as the alerts entry below — caused routing ambiguity).
+    // The active `alerts` entry below is the canonical one.
+
     maintenance: {
         id: 'see_all_maintenance',
         text: 'Maintenance',
@@ -80,7 +73,7 @@ export const dashboardMenu = {
         hide: false,
     },
  
-    	reports: {
+    reports: {
         id: 'see_all_report',
         text: 'Reports',
         path: 'reports',
@@ -100,10 +93,12 @@ export const dashboardMenu = {
         searchable: true,
         hide: false,
     },
-    driverleaderbord: {
+
+    // FIX UX-03: Corrected "Leaderbord" → "Leaderboard", path "driverleadbord" → "driverleaderboard"
+    driverleaderboard: {
         id: 'see_all_driverleader',
-        text: 'Driver Leaderbord',
-        path: 'driverleadbord',
+        text: 'Driver Leaderboard',
+        path: 'driverleaderboard',
         icon: 'Leaderboard',
         searchable: true,
         subMenu: null,
@@ -319,7 +314,6 @@ export const authPages = {
     login: {
         id: 'login',
         text: 'Login',
-        // path: 'auth-pages/login',
         path: '/',
         icon: 'Login',
     },

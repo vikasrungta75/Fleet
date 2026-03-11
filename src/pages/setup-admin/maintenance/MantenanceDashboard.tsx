@@ -1,6 +1,6 @@
 import React, { FC, useContext, useEffect, useState } from 'react';
 import PageWrapper from '../../../layout/PageWrapper/PageWrapper';
-// import SubHeader, { SubHeaderLeft } from '../../../layout/SubHeader/SubHeader';
+import SubHeader, { SubHeaderLeft } from '../../../layout/SubHeader/SubHeader'; // FIX UX-02: Re-enabled
 import Breadcrumb from '../../../components/bootstrap/Breadcrumb';
 import { dashboardMenu } from '../../../menu';
 import { useTranslation } from 'react-i18next';
@@ -255,6 +255,17 @@ const MaintenanceDashboard: FC<IMaintenanceDashboard> = ({ onSearch }) => {
 
     return (
         <PageWrapper isProtected={true} title={dashboardMenu.maintenance.text}>
+            {/* FIX UX-02: Re-enabled breadcrumb navigation */}
+            <SubHeader>
+                <SubHeaderLeft>
+                    <Breadcrumb
+                        list={[
+                            { title: 'Setup', to: '/setup' },
+                            { title: dashboardMenu.maintenance.text, to: `/${dashboardMenu.maintenance.path}` },
+                        ]}
+                    />
+                </SubHeaderLeft>
+            </SubHeader>
             <Page className="mw-100 px-0">
                 <div className="d-flex mt-n2 justify-content-between">
                     <div className="fs-2 pb-3 mb-4 fw-semibold content-heading">
