@@ -311,7 +311,7 @@ const SDCardBrowser: FC = () => {
       groups.get(g)!.push(f);
     });
 
-    for (const [, batch] of groups) {
+    for (const [, batch] of Array.from(groups)) {
       const { imei, channel } = batch[0];
       const names = batch.map(f => f.fileName);
       const keys  = batch.map(f => f.key);
