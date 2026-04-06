@@ -16,7 +16,39 @@ const isProduction = typeof window !== 'undefined' && window.location.hostname !
 
 export const IOT_BASE = isProduction ? '' : 'https://iot.ravity.io';
 const API_BASE = isProduction ? '/iot-proxy/api/v3' : 'https://iot.ravity.io/api/v3';
-const TOKEN = process.env.REACT_APP_IOT_TOKEN || '';
+
+const IOT_TOKEN_KEY = 'iot_access_token';
+const IOT_TOKEN_EXPIRY_KEY = 'iot_token_expiry';
+
+// ─── Dynamic token — reads from localStorage, auto-refreshes if expired ───────
+const getIotToken = (): string => localStorage.getItem(IOT_TOKEN_KEY) || '';
+
+// Call this once on app startup (e.g. in App.tsx useEffect)
+export const initIotAuth = async (): Promise<void> => {
+  const existing = localStorage.getItem(IOT_TOKEN_KEY);
+  const expiry   = Number(localStorage.getItem(IOT_TOKEN_EXPIRY_KEY) || 0);
+  // Reuse token if still valid (with 5-min buffer)
+  if (existing && expiry > Date.now() + 300_000) return;
+
+  const email    = process.env.REACT_APP_IOT_EMAIL    || '';
+  const password = process.env.REACT_APP_IOT_PASSWORD || '';
+  if (!email || !password) {
+    console.warn('[dashcam] REACT_APP_IOT_EMAIL / REACT_APP_IOT_PASSWORD not set — IoT API calls will fail');
+    return;
+  }
+
+  try {
+    const res = await axios.post(`${isProduction ? '/iot-proxy' : 'https://iot.ravity.io'}/api/v3/auth/login`, { email, password });
+    const data = res.data?.data;
+    if (data?.accessToken) {
+      localStorage.setItem(IOT_TOKEN_KEY, data.accessToken);
+      // expiresIn is in seconds (default 86400 = 24h)
+      localStorage.setItem(IOT_TOKEN_EXPIRY_KEY, String(Date.now() + (data.expiresIn || 86400) * 1000));
+    }
+  } catch (e) {
+    console.error('[dashcam] IoT auth failed:', e);
+  }
+};
 
 const api = () =>
   axios.create({
@@ -25,7 +57,7 @@ const api = () =>
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
-      ...(TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {}),
+      Authorization: `Bearer ${getIotToken()}`,
     },
   });
 
@@ -488,7 +520,8 @@ export const listVideoFiles = async (
   startTime: number,
   endTime: number,
   channel = 1,
-  cmdNo?: number
+  cmdNo?: number,
+  storageType = 0
 ): Promise<{ files: VideoFile[]; totalCount: number }> => {
   const res = await api().post<ApiResponse<{ files: VideoFile[]; totalCount: number }>>(
     '/video/files/list',
@@ -499,11 +532,12 @@ export const listVideoFiles = async (
       endTime: String(endTime),
       dataType: 0,
       streamType: 0,
-      storageType: 0,
+      storageType,
       ...(cmdNo !== undefined ? { cmdNo } : {}),
     }
   );
-  return res.data.data;
+  // API returns data: null when device responds but has no files
+  return res.data.data ?? { files: [], totalCount: 0 };
 };
 
 export const startVideoPlayback = async (

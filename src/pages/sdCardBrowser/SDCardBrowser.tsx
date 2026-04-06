@@ -254,26 +254,61 @@ const SDCardBrowser: FC = () => {
   const doScan = useCallback(async () => {
     if (!selImei) return;
     setScanning(true); setScanErr(''); setFiles([]); setSelected(new Set());
-    const s = toMs(dateFrom, false);
-    const e = toMs(dateTo, true);
+
+    // Use a wide window: add 24h buffer on each side to account for
+    // device timezone offset vs browser timezone offset
+    const s = toMs(dateFrom, false) - 24 * 60 * 60 * 1000;
+    const e = toMs(dateTo, true)   + 24 * 60 * 60 * 1000;
+
     const all: FileEntry[] = [];
+    const chErrors: string[] = [];
+
+    // Try all storage types: 0 = main+backup, 1 = main only, 2 = backup only
+    const storageTypes = [0, 1, 2];
 
     for (let ch = 1; ch <= MAX_CH; ch++) {
       setScanMsg(`Scanning channel ${ch} of ${MAX_CH}…`);
-      try {
-        const r = await listVideoFiles(selImei, s, e, ch);
-        if (r?.files?.length)
-          r.files.forEach(f => all.push({ ...f, imei: selImei, key: `${selImei}_${ch}_${f.fileName}` }));
-        if (ch < MAX_CH) await sleep(1200);
-      } catch (ex: any) {
-        // 2011 = device busy, others = channel absent — wait and continue
-        if (ex?.response?.data?.code === 2011) await sleep(6000);
+      let chGotFiles = false;
+
+      for (const st of storageTypes) {
+        if (chGotFiles) break;
+        try {
+          const r = await listVideoFiles(selImei, s, e, ch, undefined, st);
+          if (r?.files?.length) {
+            r.files.forEach(f => all.push({
+              ...f, imei: selImei,
+              key: `${selImei}_${ch}_${f.fileName}`,
+            }));
+            chGotFiles = true;
+          }
+        } catch (ex: any) {
+          const code = ex?.response?.data?.code;
+          const msg  = ex?.response?.data?.message || ex?.message || 'unknown error';
+          if (code === 2011) {
+            chErrors.push(`CH${ch}: device busy — retrying…`);
+            await sleep(6000);
+          } else if (code === 2004) {
+            chErrors.push(`CH${ch}: device offline (2004)`);
+            break;
+          } else {
+            chErrors.push(`CH${ch} st${st}: ${msg} (${code ?? '?'})`);
+          }
+        }
       }
+
+      if (ch < MAX_CH) await sleep(1000);
     }
 
     setScanMsg(''); setScanning(false);
-    if (!all.length) setScanErr('No video files found. Check the device is online and the date range has recordings.');
-    else setFiles(all);
+
+    if (!all.length) {
+      const detail = chErrors.length
+        ? ' Responses: ' + chErrors.join(' | ')
+        : ' The device responded but reported no recordings for this period. Try a wider date range.';
+      setScanErr('No video files found on SD card.' + detail);
+    } else {
+      setFiles(all);
+    }
   }, [selImei, dateFrom, dateTo]);
 
   // ── Selection helpers ──────────────────────────────────────────────────────
