@@ -20,6 +20,7 @@ import Login from '../pages/auth/login/Login';
 
 const LiveMonitor = lazy(() => import('../pages/liveStreaming/LiveStreaming'));
 const StreamDiagnostic = lazy(() => import('../pages/liveStreaming/StreamDiagnostic'));
+const SDCardBrowser = lazy(() => import('../pages/sdCardBrowser/SDCardBrowser'));
 const AIFleetManager = lazy(() => import('../pages/aiFleetManager/AIFleetManager'));
 const AlertsAndNotifications = lazy(() => import('../pages/alarms_notifications/AlertsAndNotifications'));
 // eslint-disable-next-line import/no-unresolved, import/extensions
@@ -160,6 +161,12 @@ const presentation = [
     {
         path: dashboardMenu.liveMonitor.path,
         element: <LiveMonitor />,
+        exact: true,
+    },
+
+    {
+        path: dashboardMenu.sdCardBrowser.path,
+        element: <SDCardBrowser />,
         exact: true,
     },
 

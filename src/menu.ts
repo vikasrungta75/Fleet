@@ -49,6 +49,16 @@ export const dashboardMenu = {
         hide: false,
      },
 
+    sdCardBrowser: {
+        id: 'sd-card-browser',
+        text: 'SD Card Browser',
+        path: 'sd-card-browser',
+        icon: 'SimCardDownload',
+        subMenu: null,
+        searchable: true,
+        hide: false,
+    },
+
     tripHistory: {
         id: 'trip-history',
         text: 'Trip History',
