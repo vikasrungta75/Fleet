@@ -69,7 +69,7 @@ const proxyApi = () =>
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
-      ...(TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {}),
+      Authorization: `Bearer ${getIotToken()}`,
     },
   });
 
