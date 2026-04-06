@@ -17,38 +17,11 @@ const isProduction = typeof window !== 'undefined' && window.location.hostname !
 export const IOT_BASE = isProduction ? '' : 'https://iot.ravity.io';
 const API_BASE = isProduction ? '/iot-proxy/api/v3' : 'https://iot.ravity.io/api/v3';
 
-const IOT_TOKEN_KEY = 'iot_access_token';
-const IOT_TOKEN_EXPIRY_KEY = 'iot_token_expiry';
+// ─── Token — read directly from env var (permanent long-lived token) ─────────
+const TOKEN = process.env.REACT_APP_IOT_TOKEN || '';
 
-// ─── Dynamic token — reads from localStorage, auto-refreshes if expired ───────
-const getIotToken = (): string => localStorage.getItem(IOT_TOKEN_KEY) || '';
-
-// Call this once on app startup (e.g. in App.tsx useEffect)
-export const initIotAuth = async (): Promise<void> => {
-  const existing = localStorage.getItem(IOT_TOKEN_KEY);
-  const expiry   = Number(localStorage.getItem(IOT_TOKEN_EXPIRY_KEY) || 0);
-  // Reuse token if still valid (with 5-min buffer)
-  if (existing && expiry > Date.now() + 300_000) return;
-
-  const email    = process.env.REACT_APP_IOT_EMAIL    || '';
-  const password = process.env.REACT_APP_IOT_PASSWORD || '';
-  if (!email || !password) {
-    console.warn('[dashcam] REACT_APP_IOT_EMAIL / REACT_APP_IOT_PASSWORD not set — IoT API calls will fail');
-    return;
-  }
-
-  try {
-    const res = await axios.post(`${isProduction ? '/iot-proxy' : 'https://iot.ravity.io'}/api/v3/auth/login`, { email, password });
-    const data = res.data?.data;
-    if (data?.accessToken) {
-      localStorage.setItem(IOT_TOKEN_KEY, data.accessToken);
-      // expiresIn is in seconds (default 86400 = 24h)
-      localStorage.setItem(IOT_TOKEN_EXPIRY_KEY, String(Date.now() + (data.expiresIn || 86400) * 1000));
-    }
-  } catch (e) {
-    console.error('[dashcam] IoT auth failed:', e);
-  }
-};
+// No-op kept for backward compatibility in case it was imported elsewhere
+export const initIotAuth = async (): Promise<void> => {};
 
 const api = () =>
   axios.create({
@@ -57,7 +30,7 @@ const api = () =>
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${getIotToken()}`,
+      ...(TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {}),
     },
   });
 
@@ -69,7 +42,7 @@ const proxyApi = () =>
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${getIotToken()}`,
+      ...(TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {}),
     },
   });
 
